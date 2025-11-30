@@ -1,0 +1,2 @@
+[console_scripts]
+anchore = anchore.cli:main_entry
