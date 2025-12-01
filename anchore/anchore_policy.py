@@ -457,7 +457,7 @@ def unformat_policy_data(poldata):
                 
                 ret.append(el)
         except Exception as err:
-            print str(err)
+            print(str(err))
             pass
 
     return(ret)
@@ -997,13 +997,13 @@ if __name__ == '__main__':
     mappings.append(map0)
 
     bundle = create_policy_bundle(name='default', policies=policies, policy_version=default_policy_version, whitelists=whitelists, whitelist_version=default_whitelist_version, mappings=mappings)
-    print "CREATED BUNDLE: " + json.dumps(bundle, indent=4)
+    print("CREATED BUNDLE: " + json.dumps(bundle, indent=4))
 
     rc = write_policy_bundle(bundle_file="/tmp/bun.json", bundle=bundle)
     newbun = read_policy_bundle(bundle_file="/tmp/bun.json")
 
     if newbun != bundle:
-        print "BUNDLE RESULT DIFFERENT AFTER SAVE/LOAD"
+        print("BUNDLE RESULT DIFFERENT AFTER SAVE/LOAD")
 
     thebun = convert_to_policy_bundle(name='default', policy_file='/root/.anchore/conf/anchore_gate.policy', policy_version=default_policy_version, whitelist_files=['/root/wl0'], whitelist_version=default_whitelist_version)
     rc = write_policy_bundle(bundle_file="/tmp/bun1.json", bundle=thebun)
@@ -1025,4 +1025,4 @@ if __name__ == '__main__':
     except Exception as err:
         import traceback
         traceback.print_exc()
-        print str(err)
+        print(str(err))

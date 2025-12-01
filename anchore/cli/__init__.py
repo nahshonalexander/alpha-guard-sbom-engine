@@ -5,7 +5,8 @@ import docker
 import sys
 from configuration import AnchoreConfiguration
 
-from version import version as anchore_version
+from version_control import version as anchore_version
+
 
 import analyzer
 import query
