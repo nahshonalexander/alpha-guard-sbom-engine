@@ -7,15 +7,9 @@ from configuration import AnchoreConfiguration
 
 from version_control import version as anchore_version
 
+from cli import query, audit,system,toolbox,login,feeds, policybundle
 
 import analyzer
-import query
-import audit
-import system
-import toolbox
-import login
-import feeds
-import policybundle
 import anchore_image_db, anchore_utils
 
 from util import contexts
@@ -186,17 +180,17 @@ def main_entry(ctx, verbose, debug, quiet, json, plain, html, config_override):
         print ("ERROR: " + str(err))
         exit(1)
 
-main_entry.add_command(system.system)
-main_entry.add_command(query.query)
-main_entry.add_command(audit.audit)
-main_entry.add_command(analyzer.analyze)
-main_entry.add_command(analyzer.gate)
-main_entry.add_command(toolbox.toolbox)
-main_entry.add_command(login.login)
-main_entry.add_command(login.logout)
-main_entry.add_command(login.whoami)
-main_entry.add_command(feeds.feeds)
-main_entry.add_command(policybundle.policybundle)
+main_entry.add_command(system.system())
+main_entry.add_command(query.query())
+main_entry.add_command(audit.audit())
+main_entry.add_command(analyzer.analyze())
+main_entry.add_command(analyzer.gate())
+main_entry.add_command(toolbox.toolbox())
+main_entry.add_command(login.login())
+main_entry.add_command(login.logout())
+main_entry.add_command(login.whoami())
+main_entry.add_command(feeds.feeds())
+main_entry.add_command(policybundle.policybundle())
 
 def anchore_pre_flight_check(ctx):
     # helper checks

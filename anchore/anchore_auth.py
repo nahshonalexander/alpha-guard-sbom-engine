@@ -81,7 +81,7 @@ def anchore_auth_save(anchore_auth, auth_file):
         return (False)
 
     try:
-        with os.fdopen(os.open(auth_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0600), 'w') as OFH:
+        with os.fdopen(os.open(auth_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as OFH:
             OFH.write(json.dumps(anchore_auth))
     except:
         return (False)

@@ -46,6 +46,7 @@ try:
             try:
                 with open(thefile, 'r') as FH:
                     pdata = FH.read().decode('utf8')
+                    print(pdata)
                     precord = anchore_utils.gem_parse_meta(pdata)
                     for k in precord.keys():
                         record = precord[k]

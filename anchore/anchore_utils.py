@@ -25,7 +25,7 @@ from configuration import AnchoreConfiguration
 from util import contexts, scripting
 import anchore_auth
 import anchore_feeds
-from .apk import compare_versions as apk_compare_versions_impl
+from apk import compare_versions as apk_compare_versions_impl
 
 _logger = logging.getLogger(__name__)
 
@@ -104,7 +104,7 @@ def init_query_cmdline(argv, paramhelp):
 
     logging.basicConfig(format='%(asctime)-15s %(levelname)s %(filename)s:%(funcName)s %(message)s', level='INFO')
     
-    if len(argv) == 2 and re.match(".*help.*", argv[1]):
+    if len(argv) == 2 and re.match(r".*help.*", argv[1]):
         print (paramhelp)
         return (False)
 
@@ -165,7 +165,7 @@ def get_docker_images(cli):
     docker_images = cli.images(all=True)
     for i in docker_images:
         if 'Id' in i:
-            Id = re.sub("sha256:", "", i['Id'])
+            Id = re.sub(r"sha256:", "", i['Id'])
             ret[Id] = i
 
     return(ret)
@@ -373,8 +373,9 @@ def generate_gates_manifest():
     for gdir in path_overrides + [gatesdir]:
         for gcmd in os.listdir(gdir):
             script = os.path.join(gdir, gcmd)
-            if re.match(".*~$|.*#$|.*\.pyc", gcmd) or not os.access(script, os.R_OK ^ os.X_OK):
+            if re.match(r".*~$|.*#$|.*\.pyc", gcmd) or not os.access(script, os.R_OK ^ os.X_OK):
                 # skip tmp and pyc modules
+                # current
                 continue
 
             try:
@@ -459,7 +460,7 @@ def discover_gates_orig():
     allhelp = {}
     for d in os.listdir(outputdir):
         gate_name = None
-        match = re.match("(.*)\.help", d)
+        match = re.match(r"(.*)\.help", d)
         if match:
             gate_name = match.group(1)
         if gate_name:
@@ -479,7 +480,7 @@ def discover_from_info(dockerfile_contents):
 
     #fromline = re.match(".*FROM\s+(\S+).*", dockerfile_contents).group(1)
 
-    fromlines = re.findall("\s*FROM\s+(\S+)\s*[\n]", dockerfile_contents)
+    fromlines = re.findall(r"\s*FROM\s+(\S+)\s*[\n]", dockerfile_contents)
     if fromlines:
         fromline = fromlines[0]
 
@@ -544,19 +545,19 @@ def discover_imageId(name):
 
         if not imageId:
             _logger.debug("looking for alternative names ("+name+") in docker_images")
-            iname = re.sub("sha256:", "", name)
+            iname = re.sub(r"sha256:", "", name)
             for dimageId in docker_images.keys():
                 i = docker_images[dimageId]
-                if iname == i['Id'] or iname == re.sub("sha256:", "", i['Id']):
-                    imageId = re.sub("sha256:", "", i['Id'])
+                if iname == i['Id'] or iname == re.sub(r"sha256:", "", i['Id']):
+                    imageId = re.sub(r"sha256:", "", i['Id'])
                     break
                 elif 'RepoTags' in i and i['RepoTags']:
                     for r in i['RepoTags']:
                         if name == r or name+":latest" == r:
-                            imageId = re.sub("sha256:", "", i['Id'])
+                            imageId = re.sub(r"sha256:", "", i['Id'])
                             break
                         elif "docker.io/"+name == r or "docker.io/"+name+":latest" == r:
-                            imageId = re.sub("sha256:", "", i['Id'])
+                            imageId = re.sub(r"sha256:", "", i['Id'])
                             break
 
         if not imageId:
@@ -590,7 +591,7 @@ def discover_imageId(name):
             if docker_cli:
                 try:
                     docker_data = docker_cli.inspect_image(name)
-                    imageId = re.sub("sha256:", "", docker_data['Id'])
+                    imageId = re.sub(r"sha256:", "", docker_data['Id'])
                 except Exception as err:
                     pass
                     
@@ -620,7 +621,7 @@ def get_images_from_kubectl():
                             if 'image' in cs:
                                 imagename = cs['image']
                             if 'imageID' in cs:
-                                imageId = re.sub("^docker://sha256:", "", cs['imageID'])
+                                imageId = re.sub(r"^docker://sha256:", "", cs['imageID'])
                             
                             if imagename and imageId:
                                 images[imageId] = imagename
@@ -666,7 +667,7 @@ def print_result(config, result, outputmode=None):
 
                 header = json_dict['result']['header']
                 if outputmode == 'table':
-                    header = [ re.sub("_", " ", x.encode('utf8')) for x in header ]
+                    header = [ re.sub(r"_", " ", x.encode('utf8')) for x in header ]
                     t = PrettyTable(header)
                     t.align = 'l'
 
@@ -685,7 +686,7 @@ def print_result(config, result, outputmode=None):
                         row = [ fill(x, max(12, width / (len(orow))) ).encode('utf8') for x in orow ]
                         t.add_row(row)
                     elif outputmode == 'plaintext':
-                        row = [ re.sub("\s", ",", x.encode('utf8')) for x in orow ]
+                        row = [ re.sub(r"\s", ",", x.encode('utf8')) for x in orow ]
                         output.append(row)
                     elif outputmode == 'raw':
                         output.append(orow)
@@ -787,7 +788,7 @@ def apkg_parse_apkdb(apkdb):
             thefiles = list()
             thepath = ""
 
-        patt = re.match("(\S):(.*)", l)
+        patt = re.match(r"(\S):(.*)", l)
         if patt:
             (k, v) = patt.group(1,2)
             apkg['type'] = "APKG"
@@ -795,7 +796,7 @@ def apkg_parse_apkdb(apkdb):
                 thename = v
                 apkg['name'] = v
             elif k == 'V':
-                vpatt = re.match("(\S*)-(\S*)", v)
+                vpatt = re.match(r"(\S*)-(\S*)", v)
                 if vpatt:
                     (vers, rel) = vpatt.group(1, 2)
                 else:
@@ -860,7 +861,7 @@ def dpkg_get_all_packages(unpackdir):
         for l in sout.splitlines(True):
             l = l.strip()
             l = l.decode('utf8')
-            (p, v, sp, sv, arch) = re.match('(\S*)\s*(\S*)\s*(\S*)\s*(\S*)\s*(.*)', l).group(1, 2, 3, 4, 5)
+            (p, v, sp, sv, arch) = re.match(r'(\S*)\s*(\S*)\s*(\S*)\s*(\S*)\s*(.*)', l).group(1, 2, 3, 4, 5)
             if p and v:
                 if p not in actual_packages:
                     actual_packages[p] = {'version':v, 'arch':arch}
@@ -980,7 +981,7 @@ def rpm_get_all_packages(unpackdir):
         for l in sout.splitlines():
             l = l.strip()
             l = l.decode('utf8')
-            (name, vers, rel, arch) = re.match('(\S*)\s*(\S*)\s*(\S*)\s*(.*)', l).group(1, 2, 3, 4)
+            (name, vers, rel, arch) = re.match(r'(\S*)\s*(\S*)\s*(\S*)\s*(.*)', l).group(1, 2, 3, 4)
             rpms[name] = {'version':vers, 'release':rel, 'arch':arch}
     except Exception as err:
         print (err.output)
@@ -1003,6 +1004,7 @@ def rpm_get_all_pkgfiles(unpackdir):
     return(rpmfiles)
 
 def gem_parse_meta(gem):
+    print(gem)
     ret = {}
 
     name = None
@@ -1016,16 +1018,17 @@ def gem_parse_meta(gem):
     try:
         for line in gem.splitlines():
             line = line.strip()
-            line = re.sub("\.freeze", "", line)
+            line = re.sub(r"\.freeze", "", line)
 
             # look for the unicode \u{} format and try to convert to something python can use
             try:
                 replline = line
-                mat = "\\\u{.*?}"
+                print(replline)
+                mat = r"\\\u{.*?}"
                 patt = re.match(r".*("+mat+").*", replline)
                 while(patt):
                     replstr = ""
-                    subpatt = re.match("\\\u{(.*)}", patt.group(1))
+                    subpatt = re.match(r"\\\u{(.*)}", patt.group(1))
                     if subpatt:
                         chars = subpatt.group(1).split()
                         for char in chars:
@@ -1039,39 +1042,39 @@ def gem_parse_meta(gem):
             except Exception as err:
                 pass
 
-            patt = re.match(".*\.name *= *(.*) *", line)
+            patt = re.match(r".*\.name *= *(.*) *", line)
             if patt:
                 name = json.loads(patt.group(1))
 
-            patt = re.match(".*\.homepage *= *(.*) *", line)
+            patt = re.match(r".*\.homepage *= *(.*) *", line)
             if patt:
                 sourcepkg = json.loads(patt.group(1))
 
-            patt = re.match(".*\.version *= *(.*) *", line)
+            patt = re.match(r".*\.version *= *(.*) *", line)
             if patt:
                 v = json.loads(patt.group(1))
                 latest = v
                 versions.append(latest)
 
-            patt = re.match(".*\.licenses *= *(.*) *", line)
+            patt = re.match(r".*\.licenses *= *(.*) *", line)
             if patt:
-                lstr = re.sub("^\[|\]$", "", patt.group(1)).split(',')
+                lstr = re.sub(r"^\[|\]$", "", patt.group(1)).split(',')
                 for thestr in lstr:
-                    thestr = re.sub(' *" *', "", thestr)
+                    thestr = re.sub(r' *" *', "", thestr)
                     lics.append(thestr)
 
-            patt = re.match(".*\.authors *= *(.*) *", line)
+            patt = re.match(r".*\.authors *= *(.*) *", line)
             if patt:
-                lstr = re.sub("^\[|\]$", "", patt.group(1)).split(',')
+                lstr = re.sub(r"^\[|\]$", "", patt.group(1)).split(',')
                 for thestr in lstr:
-                    thestr = re.sub(' *" *', "", thestr)
+                    thestr = re.sub(r' *" *', "", thestr)
                     origins.append(thestr)
 
-            patt = re.match(".*\.files *= *(.*) *", line)
+            patt = re.match(r".*\.files *= *(.*) *", line)
             if patt:
-                lstr = re.sub("^\[|\]$", "", patt.group(1)).split(',')
+                lstr = re.sub(r"^\[|\]$", "", patt.group(1)).split(',')
                 for thestr in lstr:
-                    thestr = re.sub(' *" *', "", thestr)
+                    thestr = re.sub(r' *" *', "", thestr)
                     rfiles.append(thestr)
 
     except Exception as err:
@@ -1255,11 +1258,11 @@ def get_distro_from_path(inpath):
             l = l.decode('utf8')
             try:
                 distro = vers = None
-                patt = re.match(".*CentOS.*", l)
+                patt = re.match(r".*CentOS.*", l)
                 if patt:
                     distro = 'centos'
 
-                patt = re.match(".*(\d+\.\d+).*", l)
+                patt = re.match(r".*(\d+\.\d+).*", l)
                 if patt:
                     vers = patt.group(1)
 
@@ -1285,10 +1288,10 @@ def get_distro_from_path(inpath):
             meta['DISTRO'] = 'debian'
             for line in FH.readlines():
                 line = line.strip()
-                patt = re.match("(\d+)\..*", line)
+                patt = re.match(r"(\d+)\..*", line)
                 if patt:
                     meta['DISTROVERS'] = patt.group(1)
-                elif re.match(".*sid.*", line):
+                elif re.match(r".*sid.*", line):
                     meta['DISTROVERS'] = 'unstable'
 
     if not meta['DISTRO']:
@@ -1367,14 +1370,14 @@ def get_distro_flavor(distro, version, likedistro=None):
             if ret['flavor'] != 'Unknown':
                 break
 
-    patt = re.match("(\d*)\.*(\d*)", version)
+    patt = re.match(r"(\d*)\.*(\d*)", version)
     if patt:
         (vmaj, vmin) = patt.group(1,2)
         if vmaj:
             ret['version'] = vmaj
             ret['likeversion'] = vmaj
 
-    patt = re.match("(\d+)\.*(\d+)\.*(\d+)", version)
+    patt = re.match(r"(\d+)\.*(\d+)\.*(\d+)", version)
     if patt:
         (vmaj, vmin, submin) = patt.group(1,2,3)
         if vmaj and vmin:
@@ -1526,10 +1529,10 @@ def normalize_packages(imageId):
 
                 # need to clean out/remove the "+b[0-9]+" from DEBs
                 if flavor == 'DEB':
-                    cleanvers = re.sub(re.escape("+b")+"\d+.*", "", data['version'])
+                    cleanvers = re.sub(re.escape("+b")+r"\d+.*", "", data['version'])
                     spkg = re.sub(re.escape("-"+cleanvers), "", data['sourcepkg'])
                 else:
-                    spkg = re.sub(re.escape("-"+data['version'])+".*", "", data['sourcepkg'])
+                    spkg = re.sub(re.escape("-"+data['version'])+r".*", "", data['sourcepkg'])
 
                 ret['bin_to_src'][pkg].append(spkg)
 
@@ -1959,7 +1962,7 @@ def read_kvfile_tolist(file):
         if l:
             row = l.split()
             for i in range(0, len(row)):
-                row[i] = re.sub("____", " ", row[i])
+                row[i] = re.sub(r"____", " ", row[i])
             ret.append(row)
     FH.close()
 
@@ -1988,8 +1991,8 @@ def read_kvfile_todict(file):
     for l in FH.readlines():
         l = l.strip().decode('utf8')
         if l:
-            (k, v) = re.match('(\S*)\s*(.*)', l).group(1, 2)
-            k = re.sub("____", " ", k)
+            (k, v) = re.match(r'(\S*)\s*(.*)', l).group(1, 2)
+            k = re.sub(r"____", " ", k)
             ret[k] = v
     FH.close()
 
@@ -2007,7 +2010,7 @@ def write_kvfile_fromlist(file, list, delim=' '):
     OFH = open(file, 'w')
     for l in list:
         for i in range(0,len(l)):
-            l[i] = re.sub("\s", "____", l[i])
+            l[i] = re.sub(r"\s", "____", l[i])
         thestr = delim.join(l) + "\n"
         thestr = thestr.encode('utf8')
         OFH.write(thestr)
@@ -2019,7 +2022,7 @@ def write_kvfile_fromdict(file, indict):
     for k in dict.keys():
         if not dict[k]:
             dict[k] = "none"
-        cleank = re.sub("\s+", "____", k)
+        cleank = re.sub(r"\s+", "____", k)
         thestr = ' '.join([cleank, dict[k], '\n'])
         thestr = thestr.encode('utf8')
         OFH.write(thestr)
@@ -2092,7 +2095,7 @@ def get_files_from_tarfile(intarfile):
         tar = tarfile.open(intarfile)
         for member in tar.getmembers():
             finfo = {}
-            finfo['name'] = re.sub("^\./", "/", member.name.decode('utf8'))
+            finfo['name'] = re.sub(r"^\./", "/", member.name.decode('utf8'))
             finfo['fullpath'] = os.path.normpath(finfo['name'])
             finfo['size'] = member.size
             finfo['mode'] = member.mode
@@ -2104,17 +2107,17 @@ def get_files_from_tarfile(intarfile):
                 finfo['type'] = 'dir'
             elif member.issym():
                 finfo['type'] = 'slink'
-                finfo['linkdst'] = re.sub("^\./", "/", member.linkname.decode('utf8'))
+                finfo['linkdst'] = re.sub(r"^\./", "/", member.linkname.decode('utf8'))
             elif member.islnk():
                 finfo['type'] = 'hlink'
-                finfo['linkdst'] = re.sub("^\./", "/", member.linkname.decode('utf8'))
+                finfo['linkdst'] = re.sub(r"^\./", "/", member.linkname.decode('utf8'))
             elif member.isdev():
                 finfo['type'] = 'dev'
             else:
                 finfo['type'] = 'UNKNOWN'
 
             if finfo['type'] == 'slink' or finfo['type'] == 'hlink':
-                if re.match("^/", finfo['linkdst']):
+                if re.match(r"^/", finfo['linkdst']):
                     fullpath = finfo['linkdst']
                 else:
                     dstlist = finfo['linkdst'].split('/')
@@ -2171,7 +2174,7 @@ def get_files_from_path(inpath):
                     finfo['type'] = 'UNKNOWN'
 
                 if finfo['type'] == 'slink' or finfo['type'] == 'hlink':
-                    if re.match("^/", finfo['linkdst']):
+                    if re.match(r"^/", finfo['linkdst']):
                         fullpath = finfo['linkdst']
                     else:
                         dstlist = finfo['linkdst'].split('/')
@@ -2300,7 +2303,7 @@ def get_all_image_info(instr, do_verify=False, docker_cli=None):
 
     if 'Id' in ddata:
         if not ret['imageId']:
-            ret['imageId'] = re.sub("^sha256:", "", ddata['Id'])        
+            ret['imageId'] = re.sub(r"^sha256:", "", ddata['Id'])        
 
     if 'RepoDigests' in ddata:
         ret['digests'] = ddata['RepoDigests']
@@ -2336,7 +2339,7 @@ def get_all_image_info(instr, do_verify=False, docker_cli=None):
 
     if not ret['digest']:
         for digest in ret['digests']:
-            patt = re.match("(.*)/(.*)@(.*)", digest)
+            patt = re.match(r"(.*)/(.*)@(.*)", digest)
             if patt:
                 dreg = patt.group(1)
                 drepo = patt.group(2)
@@ -2384,11 +2387,11 @@ def parse_dockerimage_string(instr):
     else:
 
         # get the host/port
-        patt = re.match("(.*?)/(.*)", instr)
+        patt = re.match(r"(.*?)/(.*)", instr)
         if patt:
             a = patt.group(1)
             remain = patt.group(2)
-            patt = re.match("(.*?):(.*)", a)
+            patt = re.match(r"(.*?):(.*)", a)
             if patt:
                 host = patt.group(1)
                 port = patt.group(2)
@@ -2402,7 +2405,7 @@ def parse_dockerimage_string(instr):
                 host = a
                 port = None
             else:
-                patt = re.match(".*\..*", a)
+                patt = re.match(r".*\..*", a)
                 if patt:
                     host = a
                 else:
@@ -2416,12 +2419,12 @@ def parse_dockerimage_string(instr):
             remain = instr
 
         # get the repo/tag
-        patt = re.match("(.*)@(.*)", remain)
+        patt = re.match(r"(.*)@(.*)", remain)
         if patt:
             repo = patt.group(1)
             digest = patt.group(2)        
         else:
-            patt = re.match("(.*):(.*)", remain)
+            patt = re.match(r"(.*):(.*)", remain)
             if patt:
                 repo = patt.group(1)
                 tag = patt.group(2)
