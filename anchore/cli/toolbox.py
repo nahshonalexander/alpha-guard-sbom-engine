@@ -203,7 +203,7 @@ def setup_module_dev(destdir):
                     for s in os.listdir(config.data['scripts_dir'] + "/examples/" + d):
                         thefile = '/'.join([config.data['scripts_dir'], "examples", d, s])
                         thefiledst = '/'.join([scriptdir, s])
-                        if re.match(".*(\.sh)$", thefile):
+                        if re.match(r".*(\.sh)$", thefile):
                             examples[d] = thefiledst
                             shutil.copy(thefile, thefiledst)
 
@@ -480,7 +480,7 @@ def images(no_trunc):
                 else:
                     printId = shortId
 
-                patt = re.match("(.*):(.*)", name)
+                patt = re.match(r"(.*):(.*)", name)
                 if patt:
                     repo = patt.group(1)
                     tag = patt.group(2)

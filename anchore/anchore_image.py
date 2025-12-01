@@ -294,7 +294,7 @@ class AnchoreImage(object):
         if lbase:
             limage = self.allimages[lbase]
             thetag = None
-            patt = re.compile(".*latest.*")
+            patt = re.compile(r".*latest.*")
             for t in limage.get_alltags_ever():
                 if patt.match(t):
                     thetag = t
@@ -308,7 +308,7 @@ class AnchoreImage(object):
             dbuf = dbuf + "FROM scratch\n"
 
         if len(cmds) > 0:
-            patt = re.compile(".*#\(nop\).*")
+            patt = re.compile(r".*#\(nop\).*")
             for c in cmds:
                 if not patt.match(c):
                     dbuf = dbuf + "RUN " + c + "\n"
@@ -355,7 +355,7 @@ class AnchoreImage(object):
             #        layers.append(patt.group(1))
             layers = [imagename]
             for i in self.docker_data['RootFS']['Layers']:
-                patt = re.match("sha256:(.*)", i)
+                patt = re.match(r"sha256:(.*)", i)
                 if patt:
                     layers.append(patt.group(1))
                 
@@ -689,7 +689,7 @@ class AnchoreImage(object):
             for member in layertarfile.getmembers():
                 layerfiles[l][member.name] = True
 
-                if re.match(".*\.wh\..*", member.name):
+                if re.match(r".*\.wh\..*", member.name):
                     fsub = re.sub(r"\.wh\.", "", member.name)
                     if fsub not in allfiles:
                         if member.name not in excludes:
@@ -707,7 +707,7 @@ class AnchoreImage(object):
                     skip = True
                 else:
                     for p in excludes:
-                        if re.match("^"+re.escape(p), member.name):
+                        if re.match(r"^"+re.escape(p), member.name):
                             skip = True
                             break
 
@@ -799,7 +799,7 @@ class AnchoreImage(object):
 
             with open(excludesfile, 'a') as OFH:
                 for f in allfiles.splitlines():
-                    if re.match('.*\.wh\..*', f):
+                    if re.match(r'.*\.wh\..*', f):
                         fsub = re.sub(r"\.wh\.", "", f)
                         OFH.write(f + "\n")
                         OFH.write(fsub + "\n")

@@ -319,8 +319,8 @@ def structure_whitelist(whitelistdata):
         
     for item in whitelistdata:
         try:
-            (k,v) = re.match("([^\s]*)\s*([^\s]*)", item).group(1,2)
-            if not re.match("^\s*#.*", k):
+            (k,v) = re.match(r"([^\s]*)\s*([^\s]*)", item).group(1,2)
+            if not re.match(r"^\s*#.*", k):
                 ret.append([k, v])
         except Exception as err:
             pass
@@ -851,7 +851,7 @@ def evaluate_gates_results(imageId, policies, image_whitelist, global_whitelist)
     for m in policies.keys():
         gdata = contexts['anchore_db'].load_gate_output(imageId, m)
         for l in gdata:
-            (k, v) = re.match('(\S*)\s*(.*)', l).group(1, 2)
+            (k, v) = re.match(r'(\S*)\s*(.*)', l).group(1, 2)
             imageId = imageId
             check = m
             trigger = k
@@ -892,7 +892,7 @@ def evaluate_gates_results(imageId, policies, image_whitelist, global_whitelist)
                             if gmod == m:                                    
                                 # special case for backward compat
                                 try:
-                                    if gmod == 'ANCHORESEC' and not re.match(".*\*.*", gtriggerId) and re.match("^CVE.*|^RHSA.*", gtriggerId):
+                                    if gmod == 'ANCHORESEC' and not re.match(r".*\*.*", gtriggerId) and re.match(r"^CVE.*|^RHSA.*", gtriggerId):
                                         gtriggerId = gtriggerId + "*"
                                 except Exception as err:
                                     _logger.warn("problem with backward compat modification of whitelist trigger - exception: " + str(err))

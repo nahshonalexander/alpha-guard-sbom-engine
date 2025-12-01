@@ -40,7 +40,7 @@ try:
             OFH.write(json.dumps(allfiles))
 
     for tfile in allfiles.keys():
-        patt = re.match(".*specifications.*\.gemspec$", tfile)
+        patt = re.match(r".*specifications.*\.gemspec$", tfile)
         if patt:
             thefile = '/'.join([unpackdir, 'rootfs', tfile])
             try:

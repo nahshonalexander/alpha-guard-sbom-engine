@@ -270,7 +270,7 @@ class Navigator(object):
                 warnfile = False
                 found = False
                 for f in os.listdir(outputdir):
-                    if re.match(".*\.WARNS", f):
+                    if re.match(r".*\.WARNS", f):
                         warnfile = '/'.join([outputdir, f])
                     else:
                         ofile = '/'.join([outputdir, f])
@@ -392,9 +392,9 @@ class Navigator(object):
                 if not os.path.exists(dd):
                     continue
                 for d in os.listdir(dd):
-                    command = re.sub("(\.py|\.sh)$", "", d)
+                    command = re.sub(r"(\.py|\.sh)$", "", d)
                     commandpath = os.path.join(dd, d)
-                    if re.match(".*\.pyc$", d):
+                    if re.match(r".*\.pyc$", d):
                         continue
 
                     try:
