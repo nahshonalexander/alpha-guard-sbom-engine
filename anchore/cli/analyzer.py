@@ -3,9 +3,10 @@ import click
 import logging
 import json
 
-import analyzer, controller, anchore_utils, anchore_policy
-from cli.common import build_image_list, anchore_print, anchore_print_err, extended_help_option
-from util import contexts
+from anchore.cli import analyzer
+from anchore import controller, anchore_utils, anchore_policy
+from anchore.cli.common import build_image_list, anchore_print, anchore_print_err, extended_help_option
+from anchore.util import contexts
 
 _logger = logging.getLogger(__name__)
 
@@ -311,7 +312,7 @@ strategies = ['BaseOnly', ]
 @click.option('--dockerfile', help='Dockerfile of the image to analyze.', type=click.Path(exists=True), metavar='<file>')
 @click.option('--imagetype', help='Specify the type of image that is being analyzed (use "none" if unknown).', metavar='<typetext>')
 @click.option('--skipgates', is_flag=True, help='Do not run gates as part of analysis.')
-@click.option('--layerstrategy', type=click.Choice(analyzer.strategies.keys()), help='Name of strategy to use for analyzing images in the history of the requested images. Identified by parentIds/imageid in `docker history` output.', default='BaseOnly')
+@click.option('--layerstrategy', type=click.Choice(analyzer.strategies), help='Name of strategy to use for analyzing images in the history of the requested images. Identified by parentIds/imageid in `docker history` output.', default='BaseOnly')
 @click.option('--excludefile', help='Name of file containing images to exclude during analysis. Each line is an image name/id', type=click.Path(exists=True), metavar='<file>')
 @click.pass_obj
 @extended_help_option(extended_help=analyze_extended_help)

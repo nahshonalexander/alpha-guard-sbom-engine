@@ -1,9 +1,10 @@
 import sys
 import click
 
-from cli.common import build_image_list, anchore_print, anchore_print_err, extended_help_option
-import navigator, anchore_utils
-from util import contexts
+
+from anchore.cli.common import build_image_list, anchore_print, anchore_print_err, extended_help_option
+from anchore import navigator, anchore_utils
+from anchore.util import contexts
 
 config = {}
 imagelist = []

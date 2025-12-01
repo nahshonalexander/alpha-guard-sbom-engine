@@ -424,7 +424,7 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
                 except Exception as err:
                     import traceback
                     traceback.print_exc()
-                    print str(err)
+                    print(str(err))
 
         return(ret)
 
@@ -494,7 +494,7 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         if not os.path.exists(thedir):
             return(ret)
         for d in os.listdir(thedir):
-            if re.match(".*\.eval$", d) or re.match(".*\.help$", d):
+            if re.match(r".*\.eval$", d) or re.match(r".*\.help$", d):
                 continue
 
             if d not in ret:

@@ -193,7 +193,7 @@ class ResourceCache(object):
 
         if not os.path.exists(self.metadata_file):
             self._logger.debug('Initializing resource cache at %s' % self.path)
-            fs_util.createpath(path=self.path, mode=0744, exists_ok=True)
+            fs_util.createpath(path=self.path, mode=0o744, exists_ok=True)
             with open(self.metadata_file, 'w') as f:
                 json.dump(self.metadata, f)
         else:

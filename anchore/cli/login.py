@@ -4,9 +4,9 @@ import getpass
 import click
 import json
 
-from cli.common import anchore_print, anchore_print_err
-from util import contexts
-import anchore_auth
+from anchore.cli.common import anchore_print, anchore_print_err
+from anchore.util import contexts
+from anchore import anchore_auth
 
 
 @click.command(name='login', short_help='Log in to the Anchore service.')

@@ -4,9 +4,9 @@ import json
 import yaml
 import logging
 import sys
-import anchore_utils
-from cli import logs
-from util import contexts
+from anchore import anchore_utils
+from anchore.cli import logs
+from anchore.util import contexts
 
 plain_output = False
 

@@ -14,9 +14,10 @@ import tarfile
 
 import logging
 
-import anchore_utils
+from anchore import anchore_utils
+from anchore.util import contexts
 
-from util import contexts
+
 
 DEVNULL = open(os.devnull, 'wb')
 

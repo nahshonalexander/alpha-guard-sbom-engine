@@ -6,8 +6,8 @@ import shutil
 import logging
 import time
 
-import anchore_utils
-from util import scripting, contexts
+from anchore import anchore_utils
+from anchore.util import scripting, contexts
 
 class Navigator(object):
     _logger = logging.getLogger(__name__)

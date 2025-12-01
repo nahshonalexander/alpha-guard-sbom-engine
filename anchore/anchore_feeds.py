@@ -8,8 +8,8 @@ import time
 import logging
 import uuid
 
-import anchore_auth
-from util import contexts
+from anchore import anchore_auth
+from anchore.util import contexts
 
 # network operations
 _logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def get_feed_list():
 
     done = False
     while not done:
-        record = anchore.anchore_auth.anchore_auth_get(contexts['anchore_auth'], url, timeout=feed_timeout,
+        record = anchore_auth.anchore_auth_get(contexts['anchore_auth'], url, timeout=feed_timeout,
                                                        retries=feed_maxretries)
         ret.update(record)
         if record['success']:

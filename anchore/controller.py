@@ -10,11 +10,11 @@ import shutil
 import hashlib
 
 #from anchore import anchore_utils#, anchore_policy
-import anchore_policy, anchore_utils
+from anchore import anchore_policy, anchore_utils
 
 import logging
 
-from util import scripting, contexts
+from anchore.util import scripting, contexts
 
 DEVNULL=open(os.devnull, 'wb')
 

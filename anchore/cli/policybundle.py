@@ -5,9 +5,10 @@ import calendar
 import datetime
 import collections 
 
-from cli.common import anchore_print, anchore_print_err
-import anchore_auth, anchore_policy
-from anchore_utils import contexts
+from anchore.cli.common import anchore_print, anchore_print_err
+from anchore import anchore_auth, anchore_policy
+from anchore.anchore_utils import contexts
+
 
 config = {}
 

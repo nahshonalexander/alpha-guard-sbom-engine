@@ -4,9 +4,9 @@ import shutil
 import filecmp
 import datetime
 import tarfile
-
-from util.tools import load_and_merge
+from anchore.util.tools import load_and_merge
 from pkg_resources import Requirement, resource_filename
+
 
 #TODO... well... all this needs to change
 

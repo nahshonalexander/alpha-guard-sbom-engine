@@ -3,16 +3,16 @@ import click
 import subprocess
 import docker
 import sys
-from configuration import AnchoreConfiguration
+from anchore.configuration import AnchoreConfiguration
 
-from version_control import version as anchore_version
+from anchore.version_control import version as anchore_version
 
-from cli import query, audit,system,toolbox,login,feeds, policybundle
+from anchore.cli import query, audit,system,toolbox,login,feeds, policybundle
 
-import analyzer
-import anchore_image_db, anchore_utils
+from anchore.cli import analyzer
+from anchore import anchore_image_db, anchore_utils
 
-from util import contexts
+from anchore.util import contexts
 from .common import init_output_format, anchore_print_err, extended_help_option
 
 
@@ -190,7 +190,7 @@ main_entry.add_command(login.login())
 main_entry.add_command(login.logout())
 main_entry.add_command(login.whoami())
 main_entry.add_command(feeds.feeds())
-main_entry.add_command(policybundle.policybundle())
+main_entry.add_command(policybundle.policybundle)
 
 def anchore_pre_flight_check(ctx):
     # helper checks

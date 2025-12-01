@@ -19,13 +19,13 @@ from textwrap import fill
 #from miscutils import splitFilename #WTF is this
 
 import logging
+from anchore.apk import compare_versions as apk_compare_versions_impl
 
-import anchore_image, anchore_image_db
-from configuration import AnchoreConfiguration
-from util import contexts, scripting
-import anchore_auth
-import anchore_feeds
-from apk import compare_versions as apk_compare_versions_impl
+from anchore import anchore_image, anchore_image_db
+from anchore.configuration import AnchoreConfiguration
+from anchore.util import contexts, scripting
+from anchore import anchore_auth
+
 
 _logger = logging.getLogger(__name__)
 

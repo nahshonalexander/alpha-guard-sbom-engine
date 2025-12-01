@@ -9,9 +9,9 @@ import json
 from textwrap import fill
 import click
 
-from cli.common import anchore_print, anchore_print_err
-import navigator, controller, anchore_utils, anchore_auth, anchore_feeds, anchore_policy
-from util import contexts, scripting
+from anchore.cli.common import anchore_print, anchore_print_err
+from anchore import navigator, controller, anchore_utils, anchore_auth, anchore_feeds, anchore_policy
+from anchore.util import contexts, scripting
 
 config = {}
 imagelist = []

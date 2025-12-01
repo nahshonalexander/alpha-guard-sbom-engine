@@ -2,9 +2,9 @@ import sys
 import click
 import datetime
 
-from cli.common import anchore_print, anchore_print_err
-import anchore_auth, anchore_feeds
-from anchore_utils import contexts
+from anchore.cli.common import anchore_print, anchore_print_err
+from anchore import anchore_auth, anchore_feeds
+from anchore.anchore_utils import contexts
 
 config = {}
 

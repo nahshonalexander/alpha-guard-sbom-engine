@@ -8,10 +8,9 @@ import uuid
 import jsonschema
 import tempfile
 
-import controller
-import anchore_utils
-import anchore_auth
-from util import contexts
+from anchore import controller
+from anchore import anchore_utils, anchore_auth
+from anchore.util import contexts
 
 _logger = logging.getLogger(__name__)
 

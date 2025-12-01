@@ -8,9 +8,10 @@ import yaml
 import time
 import shutil
 
-from cli.common import anchore_print, anchore_print_err
-from util import contexts
-import anchore_utils, anchore_auth, anchore_feeds
+from anchore.cli.common import anchore_print, anchore_print_err
+from anchore.util import contexts
+
+from anchore import anchore_utils, anchore_auth, anchore_feeds
 
 config = {}
 
@@ -224,7 +225,7 @@ def importdb(indir):
         anchore_print("importing images...")
         #imagelist = []
         for ifile in os.listdir(imgdir):
-            patt = re.match("(.*)\.json", ifile)
+            patt = re.match(r"(.*)\.json", ifile)
             if patt:
                 imageId = patt.group(1)
 
