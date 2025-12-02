@@ -845,7 +845,7 @@ class AnchoreImage(object):
             layertar = imagedir + "/" + l + "/layer.tar"
             allfiles = subprocess.check_output(["tar", "-C", rootfsdir, "-x", "-v", "-f", layertar])
             for f in allfiles.splitlines():
-                patt = re.compile('.*\.wh\..*')
+                patt = re.compile(r'.*\.wh\..*')
                 if (patt.match(f)):
                     fsub = re.sub(r"\.wh\.", "", f)
                     absfiles = list()

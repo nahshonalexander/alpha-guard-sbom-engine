@@ -379,7 +379,7 @@ def structure_policy(policydata):
     policies = {}
     for l in policydata:
         l = l.strip()
-        patt = re.compile('^\s*#')
+        patt = re.compile(r'^\s*#')
 
         if (l and not patt.match(l)):
             polinput = l.split(':')
