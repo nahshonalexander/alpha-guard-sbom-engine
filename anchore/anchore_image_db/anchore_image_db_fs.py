@@ -37,7 +37,6 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
 
         try:
             basedir = config['anchore_data_dir']
-            print(basedir)
         except:
             basedir = None
 
@@ -154,7 +153,6 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
                     json_dict['anchore_db_version'] = self.anchore_db_version_string
                     update = True
 
-            print(update)
 
             if update:
                  print(f"Attempting to write the following dict to JSON: {json_dict}")

@@ -171,7 +171,7 @@ def get_docker_images(cli):
     return(ret)
 
 def anchore_common_context_setup(config):
-    print(f'#################{config}')
+    
     if 'docker_cli' not in contexts or not contexts['docker_cli']:
 
         dimages = {}
@@ -192,7 +192,7 @@ def anchore_common_context_setup(config):
 
     if 'anchore_auth' not in contexts or not contexts['anchore_auth']:
         aafile = os.path.join(config.config_dir, "anchore_auth.json")
-        print(config)
+        
 
         #NOTE & TODO:would usally get this from the yaml file
         username = config.DEFAULT_ANON_ANCHORE_USERNAME
