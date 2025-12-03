@@ -155,9 +155,8 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
 
 
             if update:
-                 print(f"Attempting to write the following dict to JSON: {json_dict}")
-            with open(dbmetafile, 'w') as OFH:
-                OFH.write(json.dumps(json_dict))
+                with open(dbmetafile, 'w') as OFH:
+                    OFH.write(json.dumps(json_dict))
         except ValueError as err:    
             raise err
         except Exception as err:

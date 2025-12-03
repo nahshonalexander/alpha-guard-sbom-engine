@@ -23,7 +23,6 @@ def load(driver=None, config={}):
 
       # Try to find a module-level 'load' function first
     if hasattr(module, 'load') and callable(module.load):
-        print('WTF')
         # The 'load' function exists in the module, call that directly
         dbobj = module.load(config=config)
     
