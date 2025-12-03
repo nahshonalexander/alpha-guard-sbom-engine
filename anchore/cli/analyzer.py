@@ -370,6 +370,7 @@ def analyze(anchore_config, force, image, imagefile, include_allanchore, dockerf
             imagelist = ret
 
     except Exception as err:
+        #TODO: SOMEWHERE IN ANALYZERS THE ISSUE IS HERE!!!!!!
         anchore_print_err("could not load any images")
         ecode = 1
     else:

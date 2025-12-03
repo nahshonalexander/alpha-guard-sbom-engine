@@ -114,6 +114,7 @@ def init_query_cmdline(argv, paramhelp):
 
     anchore_conf = AnchoreConfiguration()
     anchore_common_context_setup(anchore_conf)
+    print(contexts['anchore_db'])
 
     ret['anchore_config'] = anchore_conf.data
 

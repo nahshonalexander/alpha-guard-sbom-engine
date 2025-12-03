@@ -7,6 +7,7 @@ import yaml
 from importlib.resources import files
 import filecmp
 
+
 from anchore.util.tools import load_and_merge
 
 

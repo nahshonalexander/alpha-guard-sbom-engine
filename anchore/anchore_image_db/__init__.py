@@ -19,7 +19,6 @@ def load(driver=None, config={}):
 
     module_path = driver_map[driver]
     module = importlib.import_module(module_path)
-    print(module)
 
       # Try to find a module-level 'load' function first
     if hasattr(module, 'load') and callable(module.load):
@@ -34,5 +33,4 @@ def load(driver=None, config={}):
     else:
         # If neither pattern is found, raise an error
         raise AttributeError(f"Driver module {module_path} does not have a valid 'load' function or class method 'load'.")
-    print(dbobj)
     return dbobj
