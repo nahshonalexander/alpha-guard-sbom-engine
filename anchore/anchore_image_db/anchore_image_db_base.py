@@ -1,8 +1,7 @@
 import re
 import os
 import logging
-
-import anchore_utils
+from anchore.version_control import version as anchore_version_string
 
 DEVNULL = open(os.devnull, 'wb')
 
@@ -16,7 +15,6 @@ class AnchoreImageDB(object):
         self.anchore_version_string = None
         self.anchore_db_version_string = None
         try:
-            import version_control as anchore_version_string
             self.anchore_version_string = anchore_version_string
             self.anchore_db_version_string = self.anchore_version_string
             try:

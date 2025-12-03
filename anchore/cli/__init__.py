@@ -5,6 +5,10 @@ import docker
 import sys
 from anchore.configuration import AnchoreConfiguration
 
+#this is linux based and deprecated in python2 
+# import rpm
+# from rpmUtils import miscutils
+
 from anchore.version_control import version as anchore_version
 
 from anchore.cli import query, audit,system,toolbox,login,feeds, policybundle
@@ -124,8 +128,8 @@ def main_entry(ctx, verbose, debug, quiet, json, plain, html, config_override):
     anchore gate --image nginx:latest
     """
     # Load the config into the context object
-    logfile = None
-    debug_logfile = None
+    logfile = 'anchore_logs/log_file.log'
+    debug_logfile = 'anchore_logs/debug_file.log'
 
     try:
         try:
@@ -137,6 +141,7 @@ def main_entry(ctx, verbose, debug, quiet, json, plain, html, config_override):
                         if not key or not val:
                             raise Exception("could not split by '='")
                         config_overrides[key] = val
+                        print(config_override[key])
                     except:
                         click.echo("Error: specified --config_override param cannot be parsed (should be <config_opt>=<value>): " + str(el))
                         exit(1)
@@ -149,11 +154,7 @@ def main_entry(ctx, verbose, debug, quiet, json, plain, html, config_override):
             import traceback
             traceback.print_exc()
             sys.exit(1)
-        try:
-            logfile = anchore_conf.data['log_file'] if 'log_file' in anchore_conf.data else None
-            debug_logfile = anchore_conf.data['debug_log_file'] if 'debug_log_file' in anchore_conf.data else None
-        except Exception as e:
-            click.echo(str(e))
+
 
         ctx.obj = anchore_conf
 
@@ -199,6 +200,7 @@ def anchore_pre_flight_check(ctx):
         config = ctx.obj.data
     except:
         return(False)
+    
         
     if subcommand in ['explore', 'gate', 'analyze']:
 
@@ -209,21 +211,21 @@ def anchore_pre_flight_check(ctx):
         except Exception as err:
             anchore_print_err("Anchore requires dpkg libs and commands")
             return(False)
+        
+        # # NOTE: This doesnt work, because it was depcreated in python2
+        # try:
+        #     cmd = ['rpm', '--version']
+        #     sout = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        # except Exception as err:
+        #     anchore_print_err("Anchore requires yum/rpm libs and commands")
+        #     return(False)
 
-        try:
-            from rpmUtils.miscutils import splitFilename
-            cmd = ['rpm', '--version']
-            sout = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except Exception as err:
-            anchore_print_err("Anchore requires yum/rpm libs and commands")
-            return(False)
-
-    if subcommand in ['explore', 'gate', 'analyze', 'toolbox']:
-        # check DB readiness
-        try:
-            db = anchore_image_db.load(driver=config['anchore_db_driver'], config=config)
-        except Exception as err:
-            anchore_print_err("Could not set up connection to Anchore DB")
-            return(False)
+    # if subcommand in ['explore', 'gate', 'analyze', 'toolbox']:
+    #     # check DB readiness
+    #     try:
+    #         db = anchore_image_db.load(driver=config['anchore_db_driver'], config=config)
+    #     except Exception as err:
+    #         anchore_print_err("Could not set up connection to Anchore DB")
+    #         return(False)
 
     return(True)

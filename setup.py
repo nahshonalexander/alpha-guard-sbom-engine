@@ -1,12 +1,12 @@
 #!/usr/bin/python
 from setuptools import setup, find_packages
-from anchore import version
+
 
 import os, shutil, errno
 
 installroot = '/'
 linux_default_config_location = os.path.join(installroot, 'etc/anchore')
-
+__version__ = "1.0.0"
 
 def install_configs(overwrite=False):
     if overwrite:
@@ -68,7 +68,7 @@ setup(
     long_description=anchore_long_description,
     url=url,
     packages=find_packages(exclude=('conf*', 'tests*')),
-    version=version,
+    version=__version__ ,
     data_files=data_files,
     include_package_data=True,
     package_data=package_data,

@@ -63,7 +63,7 @@ def get_group_list(feed):
 
     done = False
     while not done:
-        record = anchore.anchore_auth.anchore_auth_get(contexts['anchore_auth'], url, timeout=feed_timeout,
+        record = anchore_auth.anchore_auth_get(contexts['anchore_auth'], url, timeout=feed_timeout,
                                                        retries=feed_maxretries)
         ret.update(record)
         if record['success']:
@@ -98,7 +98,7 @@ def get_group_data(feed, group, since="1970-01-01", uniq_key=None):
     while not done:
         _logger.debug("data group url: " + str(url))
 
-        record = anchore.anchore_auth.anchore_auth_get(contexts['anchore_auth'], url, timeout=feed_timeout,
+        record = anchore_auth.anchore_auth_get(contexts['anchore_auth'], url, timeout=feed_timeout,
                                                        retries=feed_maxretries)
         if record['success']:
             data = json.loads(record['text'])

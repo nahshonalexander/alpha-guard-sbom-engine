@@ -99,6 +99,7 @@ def anchore_print_err(msg):
     exc = sys.exc_info()
     if exc is not None and exc != (None, None, None):
         logging.getLogger(__name__).exception(msg)
+        print('hello')
     else:
         logging.getLogger(__name__).error(msg)
 

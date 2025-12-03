@@ -169,12 +169,12 @@ def gate(anchore_config, force, image, imagefile, include_allanchore, editpolicy
                 ecode = 1
         elif rmpolicy:
             if not con.rmpolicy():
-                ecode = 1;
+                ecode = 1
             else:
                 anchore_print("policies successfully removed.", do_formatting=True)
         elif updatepolicy:
             if not con.updatepolicy(updatepolicy):
-                ecode = 1;
+                ecode = 1
             else:
                 anchore_print("policies successfully updated.", do_formatting=True)
         elif listpolicy:

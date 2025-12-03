@@ -4,9 +4,9 @@ import os
 import shutil
 import time
 import tarfile
+from anchore import anchore_utils
+from . import anchore_image_db_base
 
-import anchore_utils
-import anchore_image_db_base
 
 def load(config={}):
     return(AnchoreImageDB_FS(config=config))
@@ -37,6 +37,7 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
 
         try:
             basedir = config['anchore_data_dir']
+            print(basedir)
         except:
             basedir = None
 
@@ -115,11 +116,22 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
             if not os.path.exists(dbmetafile):
                 with open(dbmetafile, 'w') as OFH:
                     OFH.write(json.dumps({}))
+            
 
             update = False
-
             with open(dbmetafile, 'r') as FH:
-                json_dict = json.loads(FH.read())
+                content = FH.read().strip()
+
+                if not content:
+                    json_dict = {}
+                else:
+                    # Otherwise, try to parse the content as JSON
+                    try:
+                        json_dict = json.loads(content)
+                    except ValueError as e:
+                        print(f"Error decoding JSON from file {dbmetafile}: {e}")
+                        # Decide how to proceed: create a new empty one? exit?
+                        json_dict = {} # Proceed with an empty dict for recovery
 
             if 'anchore_version' not in json_dict:
                 json_dict['anchore_version'] = self.anchore_version_string
@@ -142,11 +154,13 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
                     json_dict['anchore_db_version'] = self.anchore_db_version_string
                     update = True
 
-            if update:
-                with open(dbmetafile, 'w') as OFH:
-                    OFH.write(json.dumps(json_dict))
+            print(update)
 
-        except ValueError as err:
+            if update:
+                 print(f"Attempting to write the following dict to JSON: {json_dict}")
+            with open(dbmetafile, 'w') as OFH:
+                OFH.write(json.dumps(json_dict))
+        except ValueError as err:    
             raise err
         except Exception as err:
             raise err
@@ -293,7 +307,7 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         self.make_image_structure(imageId)
 
         if not report:
-            report = load_image_new(imageId)
+            report = self.load_image_new(imageId)
 
         # store the reports
         self.save_image_report(imageId, report['image_report'])
@@ -803,4 +817,6 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
                 ret = json.loads(FH.read())
 
         return(ret)
+    
+
 

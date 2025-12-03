@@ -7,19 +7,20 @@ from anchore import anchore_auth, anchore_feeds
 from anchore.anchore_utils import contexts
 
 config = {}
-
 @click.group(name='feeds', short_help='Manage syncing of and subscriptions to Anchore data feeds.')
 @click.pass_obj
 def feeds(anchore_config):
+    print(anchore_config)
     global config
     config = anchore_config
 
     ecode = 0
     emsg = ""
     success = True
-
+    print('PLEASE MF')
     try:
         rc, msg = anchore_feeds.check()
+        print(rc)
         if not rc:
             anchore_print("initializing feed metadata: ...")
             rc, ret = anchore_feeds.sync_feedmeta()
@@ -46,6 +47,7 @@ def show(feed):
     try:
         feedmeta = anchore_feeds.load_anchore_feedmeta()
         if feed in feedmeta:
+            
             result = {}
             groups = feedmeta[feed].get('groups',{}).values()
             result['name'] = feed

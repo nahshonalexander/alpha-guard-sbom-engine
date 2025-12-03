@@ -1,0 +1,1 @@
+{"username": "anon@ancho.re", "password": "pbiU2RYZ2XrmYQ", "max_retries": 3, "conn_timeout": 5, "client_info_url": "https://ancho.re/v1/account/users", "token_url": "https://ancho.re/oauth/token", "auth_file": "/home/solomongray/alpha-guard-sbom-engine/anchore/conf/anchore_auth.json", "client_info": {}, "token_info": {}, "user_info": {}}

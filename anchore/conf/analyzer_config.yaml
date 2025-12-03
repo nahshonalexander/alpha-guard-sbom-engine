@@ -7,20 +7,20 @@
 # example configuration for the 'retrieve_files' analyzer, if installed
 #
 
-#retrieve_files:
-#  file_list:
-#    - '/etc/passwd'
-#    - '/etc/services'
-#    - '/etc/sudoers'
+retrieve_files:
+ file_list:
+   - '/etc/passwd'
+   - '/etc/services'
+   - '/etc/sudoers'
 
 
 #
 # example configuration for the 'content_search' analyze, if installed
 #
 
-#content_search:
-#  match_params:
-#    - MAXFILESIZE=100000
-#    - STOREONMATCH=y
-#  regexp_match:
-#    - ".*password.*"
+content_search:
+ match_params:
+   - MAXFILESIZE=100000
+   - STOREONMATCH=y
+ regexp_match:
+   - ".*password.*"
