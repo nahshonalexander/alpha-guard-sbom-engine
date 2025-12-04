@@ -6,6 +6,7 @@ from pathlib import Path
 import yaml
 from importlib.resources import files
 import filecmp
+import docker
 
 
 from anchore.util.tools import load_and_merge

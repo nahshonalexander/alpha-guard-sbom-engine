@@ -37,15 +37,16 @@ package_name = "anchore"
 package_data = {
     package_name: ['conf/*',
                    'schemas/*',
-                   'anchore-modules/analyzers/*',
-                   'anchore-modules/gates/*',
-                   'anchore-modules/queries/*',
-                   'anchore-modules/multi-queries/*',
-                   'anchore-modules/shell-utils/*',
-                   'anchore-modules/examples/queries/*',
-                   'anchore-modules/examples/multi-queries/*',
-                   'anchore-modules/examples/analyzers/*',
-                   'anchore-modules/examples/gates/*',
+                   'anchore_modules/*'
+                   'anchore_modules/analyzers/*',
+                   'anchore_modules/gates/*',
+                   'anchore_modules/queries/*',
+                   'anchore_modules/multi-queries/*',
+                   'anchore_modules/shell-utils/*',
+                   'anchore_modules/examples/queries/*',
+                   'anchore_modules/examples/multi-queries/*',
+                   'anchore_modules/examples/analyzers/*',
+                   'anchore_modules/examples/gates/*',
                    'doc/man/*'
                    ]
 }

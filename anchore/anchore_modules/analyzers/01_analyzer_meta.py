@@ -3,7 +3,7 @@
 import sys
 import os
 import shutil
-import anchore_utils
+from anchore import anchore_utils
 
 analyzer_name = "analyzer_meta"
 

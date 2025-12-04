@@ -5,5 +5,5 @@ include CONTRIBUTING.rst
 include anchore/conf/*
 include anchore/doc/man/*
 include anchore/schemas/*
-recursive-include anchore/anchore-modules *
+recursive-include anchore/anchore_modules *
 

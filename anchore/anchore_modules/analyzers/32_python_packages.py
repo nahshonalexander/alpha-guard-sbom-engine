@@ -7,7 +7,7 @@ import json
 import traceback
 import pkg_resources
 
-import anchore_utils
+from anchore import anchore_utils
 
 analyzer_name = "package_list"
 

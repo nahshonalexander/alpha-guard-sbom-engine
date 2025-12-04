@@ -1,4 +1,4 @@
-docker-py
+docker
 prettytable
 click
 requests
@@ -6,3 +6,4 @@ pyyaml
 clint
 jsonschema
 enum34
+setuptools

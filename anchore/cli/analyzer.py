@@ -4,6 +4,8 @@ import logging
 import json
 import docker
 
+from anchore import analyzer as az
+
 from anchore.cli import analyzer
 from anchore import controller, anchore_utils, anchore_policy
 from anchore.cli.common import build_image_list, anchore_print, anchore_print_err, extended_help_option
@@ -141,12 +143,15 @@ def gate(anchore_config, force, image, imagefile, include_allanchore, editpolicy
         raise click.BadOptionUsage('Cannot specify --usetag unless gating a single image (using --image)')
 
     try:
+
+        client = docker.from_env()
+        names = [img.id.split(":", 1)[1] for img in client.images.list()]
+        
         imagedict = build_image_list(anchore_config, image, imagefile, not (image or imagefile), include_allanchore)
-        imagelist = imagedict.keys()
-        inputimagelist = list(imagelist)
+        inputimagelist = list(names)
 
         try:
-            ret = anchore_utils.discover_imageIds(imagelist)
+            ret = anchore_utils.discover_imageIds(names)
         except ValueError as err:
             raise err
         else:
@@ -340,8 +345,6 @@ def analyze(anchore_config, force, image, imagefile, include_allanchore, dockerf
     ecode = 0
 
     args = {}
-    client = docker.from_env()
-    client.info()
 
 
     if image and imagefile:
@@ -362,22 +365,21 @@ def analyze(anchore_config, force, image, imagefile, include_allanchore, dockerf
                 raise click.BadOptionUsage("Invalid imagetype specified: valid types are 'none' or 'base'")
 
     try:
-        imagedict = build_image_list(anchore_config, image, imagefile, not (image or imagefile), include_allanchore, exclude_file=excludefile, dockerfile=dockerfile)
-        imagelist = imagedict.keys()
-        print(imagelist)
         # NOTE: got info from here https://docker-py.readthedocs.io/en/stable/
-
+        # I dont know why yhet are tryin to build the image like this? Maybe python2 sytanx sugar? client = docker.from_env()
+        client = docker.from_env()
+        names = [img.id.split(":", 1)[1] for img in client.images.list()]
+      
+        
         try:
-            ret = anchore_utils.discover_imageIds(imagelist)
-            print(ret)
+            print(names)
+            anchore_utils.discover_imageIds(names)
+
         except ValueError as err:
             raise err
-        else:
-            #imagelist = ret.keys()
-            imagelist = ret
 
     except Exception as err:
-        #TODO: SOMEWHERE IN ANALYZERS THE ISSUE IS HERE!!!!!!
+
         anchore_print_err("could not load any images")
         ecode = 1
     else:
@@ -386,19 +388,20 @@ def analyze(anchore_config, force, image, imagefile, include_allanchore, dockerf
         count = 0
         allimages = {}
         success = True
-        for imageId in imagedict.keys():
+        for imageId in names:
 
             if count % step == 0:
                 allimages.clear()
                 allimages = {}
                 count = 0
 
-            args.update({'dockerfile': imagedict[imageId]['dockerfile'], 'skipgates': skipgates, 'selection_strategy': layerstrategy})
+            args.update({'dockerfile': imageId, 'skipgates': skipgates, 'selection_strategy': layerstrategy})
 
             inlist = [imageId]
             try:
                 anchore_print("Analyzing image: " + imageId)
-                rc = analyzer.Analyzer(anchore_config=anchore_config, imagelist=inlist, allimages=allimages, force=force, args=args).run()
+                rc = az.Analyzer(anchore_config=anchore_config, imagelist=inlist, allimages=allimages, force=force, args=args).run()
+                print(rc)
                 if not rc:
                     anchore_print_err("analysis failed.")
                     success = False

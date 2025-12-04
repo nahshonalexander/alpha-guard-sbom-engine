@@ -7,7 +7,7 @@ import time
 import time
 import hashlib
 
-import anchore_utils
+from anchore import anchore_utils
 
 analyzer_name = "file_checksums"
 

@@ -4,7 +4,7 @@ import sys
 import os
 import re
 import json
-import anchore_utils
+from anchore import anchore_utils
 
 analyzer_name = "secret_search"
 

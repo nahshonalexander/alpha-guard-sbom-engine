@@ -54,7 +54,7 @@ class AnchoreImage(object):
         self.dockerfile = dockerfile
         self.dockerfile_contents = None
         self.dockerfile_mode = None
-        self.docker_cli = None
+        self.docker_cli = docker.from_env()
         self.docker_data = {}
         self.docker_history = {}
 
@@ -101,9 +101,6 @@ class AnchoreImage(object):
 
         self.meta['imageId'] = result
 
-        if dockerfile and (os.stat(dockerfile).st_size <= 0 or not os.path.exists(dockerfile) or not os.path.isfile(dockerfile)):
-            raise Exception("input dockerfile ("+str(dockerfile)+") is invalid.")
-
         # set up external contexts
         if docker_cli:
             self.docker_cli = docker_cli
@@ -111,7 +108,7 @@ class AnchoreImage(object):
             self.docker_cli = contexts['docker_cli']
         else:
             try:
-                self.docker_cli = docker.Client(base_url='unix://var/run/docker.sock', version='auto', timeout=300)
+                self.docker_cli =  docker.DockerClient(base_url='unix://var/run/docker.sock', version='auto', timeout=300)
             except Exception as err:
                 self._logger.warn("could not establish connection with docker, some operations (analyze) may fail: exception: " + str(err))
 
@@ -624,18 +621,21 @@ class AnchoreImage(object):
             os.makedirs(rootfsdir)
 
         try:
-            container = self.docker_cli.create_container(self.meta['imageId'], 'true')
+            container = self.docker_cli.containers.create(self.meta['imageId'], 'true')
         except Exception as err:
             self._logger.error("unable to run create container for exporting: " + str(self.meta['imageId']) + ": error: " + str(err))
             return(False)
         else:
-            with open(imagedir + "/squashed.tar", 'w') as FH:
-                tar = self.docker_cli.export(container.get('Id'))
-                while not tar.closed:
-                    FH.write(tar.read(4096*16))
+            tar_path = imagedir + "/squashed.tar"
+            with open(tar_path, 'wb') as FH:
+                tar_stream = container.export()
+                for chunk in tar_stream:
+                    FH.write(chunk)
+
 
         try:
-            self.docker_cli.remove_container(container=container.get('Id'), force=True)
+            container.remove(force=True)
+
         except:
             self._logger.error("unable to delete (cleanup) temporary container - proceeding but zombie container may be left in docker: " + str(err))
 

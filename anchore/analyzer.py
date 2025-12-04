@@ -8,11 +8,10 @@ import hashlib
 import time
 import logging
 from collections import OrderedDict
-import controller
-import anchore_utils
-#TODO: consolidate the Imports
-from util import scripting
-from util import contexts
+from anchore import controller, anchore_utils
+from anchore.util import scripting, contexts
+from pathlib import Path
+
 
 
 class SelectionStrategy(object):
@@ -168,14 +167,28 @@ class Analyzer(object):
         for override in overrides:
             scripts[override] = list()
 
-        if not os.path.exists(analyzerdir):
-            raise Exception("No base analyzers found - please check anchore insallation for completeness")
-        else:
-            for f in os.listdir(analyzerdir):
+
+        analyzerdir_path = Path(analyzerdir)  
+
+
+        print(analyzerdir_path)
+
+        #I can see the path but it keeps breaking....?
+        # if not analyzerdir_path.exists():
+        #     raise Exception("No base analyzers found - please check anchore insallation for completeness")
+        # else:
+        #     for f in os.listdir(analyzerdir):
+        #         script = os.path.join(analyzerdir, f)
+        #         # check the script to make sure its ready to run
+        #         if self.script_is_runnable(script):
+        #             scripts['base'].append(script)
+
+        for f in os.listdir(analyzerdir):
                 script = os.path.join(analyzerdir, f)
                 # check the script to make sure its ready to run
                 if self.script_is_runnable(script):
                     scripts['base'].append(script)
+
 
         for override in overrides:
             scripts[override] = list()

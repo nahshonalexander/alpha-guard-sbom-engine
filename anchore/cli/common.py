@@ -116,7 +116,7 @@ def anchore_print(msg, do_formatting=False):
     else:
         click.echo(msg)
 
-
+#TODO: Update this to acutally use the DOCKER CLI
 def build_image_list(config, image, imagefile, all_local, include_allanchore, dockerfile=None, exclude_file=None):
     """Given option inputs from the cli, construct a list of image ids. Includes all found with no exclusion logic"""
 
@@ -134,7 +134,6 @@ def build_image_list(config, image, imagefile, all_local, include_allanchore, do
 
     imagelist = {}
     if image:
-        print(image)
         imagelist[image] = {'dockerfile':dockerfile}
 
     if imagefile:

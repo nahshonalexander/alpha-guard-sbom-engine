@@ -4,7 +4,7 @@ import sys
 import os
 
 
-import anchore_utils
+from anchore import anchore_utils
 
 analyzer_name = "package_list"
 

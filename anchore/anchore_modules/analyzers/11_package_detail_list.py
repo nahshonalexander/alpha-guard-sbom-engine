@@ -5,8 +5,9 @@ import os
 import re
 import json
 import subprocess
+from anchore import anchore_utils
 
-import anchore_utils
+
 
 def rpm_get_all_packages_detail(unpackdir):
     rpms = {}

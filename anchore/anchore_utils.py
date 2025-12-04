@@ -163,11 +163,8 @@ def get_docker_images(cli):
     if not cli:
         return(ret)
 
-    docker_images = cli.images(all=True)
-    for i in docker_images:
-        if 'Id' in i:
-            Id = re.sub(r"sha256:", "", i['Id'])
-            ret[Id] = i
+
+    ret = cli.images.list(all=True)
 
     return(ret)
 
@@ -178,9 +175,7 @@ def anchore_common_context_setup(config):
         dimages = {}
         try:
             # NOTE: got info from here https://docker-py.readthedocs.io/en/stable/
-            client = docker.from_env()
-            print(client.containers.list())
-            contexts['docker_cli'] = docker.Client(base_url=config['docker_conn'], version='auto', timeout=int(config['docker_conn_timeout']))
+            contexts['docker_cli'] = docker.DockerClient(base_url=config['docker_conn'], version='auto', timeout=int(config['docker_conn_timeout']))
             testconn = contexts['docker_cli'].version()
             dimages = get_docker_images(contexts['docker_cli']) 
         except Exception as err:
@@ -543,14 +538,13 @@ def discover_imageId(name):
         name_variants = []
         name_variants.append(name)
 
+        imageId = name
+
         try:
-            docker_images = contexts['docker_images']
-            print(contexts)
+            docker_images = name
         except:
             docker_images = {}
 
-        if name in docker_images.keys():
-            imageId = name
 
         if not imageId:
             _logger.debug("looking for alternative names ("+name+") in docker_images")
@@ -2027,13 +2021,12 @@ def write_kvfile_fromlist(file, list, delim=' '):
 
 def write_kvfile_fromdict(file, indict):
     dict = indict.copy()
-    OFH = open(file, 'w')
+    OFH = open(file, 'w', encoding='utf-8')
     for k in dict.keys():
         if not dict[k]:
             dict[k] = "none"
         cleank = re.sub(r"\s+", "____", k)
         thestr = ' '.join([cleank, dict[k], '\n'])
-        thestr = thestr.encode('utf8')
         OFH.write(thestr)
     OFH.close()
 

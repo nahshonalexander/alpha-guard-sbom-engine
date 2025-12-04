@@ -8,7 +8,7 @@ import subprocess
 import time
 import copy
 
-import anchore_utils
+from anchore import anchore_utils
 
 def apk_get_file_package_metadata(unpackdir, record_template):
     # derived from alpine apk checksum logic

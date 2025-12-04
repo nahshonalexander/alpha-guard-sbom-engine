@@ -185,7 +185,7 @@ def setup_module_dev(destdir):
 
             # copy examples into the unpacked environment            
             examples = {}
-            basedir = '/'.join([unpackdir, "anchore-modules"])
+            basedir = '/'.join([unpackdir, "anchore_modules"])
             if not os.path.exists(basedir):
                 os.makedirs(basedir)
 

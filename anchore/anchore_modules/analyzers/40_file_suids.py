@@ -7,7 +7,7 @@ import stat
 
 import anchore_utils
 
-analyzer_name = "file_suids"
+from anchore import anchore_utils
 
 try:
     config = anchore_utils.init_analyzer_cmdline(sys.argv, analyzer_name)

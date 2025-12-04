@@ -7,7 +7,7 @@ import json
 import subprocess
 import stat
 
-import anchore_utils
+from anchore import anchore_utils
 
 def rpm_check_file_membership_from_path(unpackdir, allfiles=None):
     rpmfiles = {}

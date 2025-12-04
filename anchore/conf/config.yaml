@@ -1,12 +1,12 @@
 # Anchore configuration file
 
 
-anchore_data_dir:  $HOME/anchore/
+anchore_data_dir:  asdf/anchore/test
 
 anchore_db_driver: 'AnchoreImageDB_FS'
 anchore_db_driver_config:
   # only applicable to the 'anchore_image_db_fs' driver (default driver), path is relative to anchore_data_dir unless it is set to an abs path
-  db_dir: 'anchore/anchore_image_db/test_db/data/data.db'
+db_dir: 'anchore/anchore_image_db/test_db/data/data.db'
 
 tmpdir: '/tmp'
 log_file: '/anchore_logs/log_file.log'
