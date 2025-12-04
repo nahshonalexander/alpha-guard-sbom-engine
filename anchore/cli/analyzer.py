@@ -2,6 +2,7 @@ import sys
 import click
 import logging
 import json
+import docker
 
 from anchore.cli import analyzer
 from anchore import controller, anchore_utils, anchore_policy
@@ -339,6 +340,9 @@ def analyze(anchore_config, force, image, imagefile, include_allanchore, dockerf
     ecode = 0
 
     args = {}
+    client = docker.from_env()
+    client.info()
+
 
     if image and imagefile:
         raise click.BadOptionUsage('Can only use one of --image, --imagefile')
@@ -360,9 +364,12 @@ def analyze(anchore_config, force, image, imagefile, include_allanchore, dockerf
     try:
         imagedict = build_image_list(anchore_config, image, imagefile, not (image or imagefile), include_allanchore, exclude_file=excludefile, dockerfile=dockerfile)
         imagelist = imagedict.keys()
+        print(imagelist)
+        # NOTE: got info from here https://docker-py.readthedocs.io/en/stable/
 
         try:
             ret = anchore_utils.discover_imageIds(imagelist)
+            print(ret)
         except ValueError as err:
             raise err
         else:

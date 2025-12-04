@@ -177,6 +177,9 @@ def anchore_common_context_setup(config):
 
         dimages = {}
         try:
+            # NOTE: got info from here https://docker-py.readthedocs.io/en/stable/
+            client = docker.from_env()
+            print(client.containers.list())
             contexts['docker_cli'] = docker.Client(base_url=config['docker_conn'], version='auto', timeout=int(config['docker_conn_timeout']))
             testconn = contexts['docker_cli'].version()
             dimages = get_docker_images(contexts['docker_cli']) 
@@ -542,6 +545,7 @@ def discover_imageId(name):
 
         try:
             docker_images = contexts['docker_images']
+            print(contexts)
         except:
             docker_images = {}
 

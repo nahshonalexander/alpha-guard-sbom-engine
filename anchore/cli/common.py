@@ -134,6 +134,7 @@ def build_image_list(config, image, imagefile, all_local, include_allanchore, do
 
     imagelist = {}
     if image:
+        print(image)
         imagelist[image] = {'dockerfile':dockerfile}
 
     if imagefile:

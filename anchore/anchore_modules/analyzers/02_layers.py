@@ -46,6 +46,6 @@ except Exception as err:
     raise err
 
 ofile = os.path.join(outputdir, 'layers_to_dockerfile')
-anchore.anchore_utils.write_kvfile_fromdict(ofile, {'dockerfile_to_layer_map':json.dumps(output)})
+anchore_utils.write_kvfile_fromdict(ofile, {'dockerfile_to_layer_map':json.dumps(output)})
 
 sys.exit(0)
