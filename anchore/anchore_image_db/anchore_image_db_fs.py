@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 import tarfile
+from pathlib import Path
 from anchore import anchore_utils
 from . import anchore_image_db_base
 
@@ -394,17 +395,20 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
 
     def load_analyzer_manifest(self, imageId):
         ret = {}
-        thefile = os.path.join(self.imagerootdir, imageId, 'analyzers.done')
-        if os.path.exists(thefile):
-            with open(thefile, 'r') as FH:
+        thefile = Path(self.imagerootdir) / imageId / 'analyzers.done'
+        thefilepath = Path(thefile)  
+
+        if thefilepath.exists():
+            with open(str(thefile), 'r') as FH:
                 try:
                     ret = json.loads(FH.read())
+
                 except:
                     ret = {}
         return(ret)
 
     def save_analyzer_manifest(self, imageId, data):
-        thefile = os.path.join(self.imagerootdir, imageId, 'analyzers.done')
+        thefile = Path(self.imagerootdir) / imageId / 'analyzers.done'
         if data:
             with open(thefile, 'w') as FH:
                 FH.write(json.dumps(data))
@@ -413,21 +417,22 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         ret = {}
 
         if not module_type or module_type == 'base':
-            thefile = '/'.join([self.imagerootdir, imageId, "analyzer_output", module_name, module_value])
+            thefile = Path(self.imagerootdir) / imageId / 'analyzer_output'/ module_name / module_value
         else:
-            thefile = '/'.join([self.imagerootdir, imageId, "analyzer_output_"+module_type, module_name, module_value])
+            thefile = Path(self.imagerootdir) / imageId / 'analyzer_output_'+module_type / module_name/module_value
+        thefilepath = Path(thefile)  
 
-        if os.path.exists(thefile):
-            if os.path.isfile(thefile):
+        if thefilepath.exists():
+            if thefilepath.is_file():
                 ret = anchore_utils.read_kvfile_todict(thefile)
-            elif os.path.isdir(thefile):
+            elif thefilepath.is_dir():
                 ret = thefile
                 import tarfile, io
                 try:
                     TFH = io.BytesIO()
                     tar = tarfile.open(fileobj=TFH, mode='w:gz', format=tarfile.PAX_FORMAT)
-                    for l in os.listdir(thefile):
-                        tarfile = os.path.join(thefile, l)
+                    for l in thefilepath.iterdir():
+                        tarfile= Path(thefilepath) /l 
                         tar.add(tarfile)
                     tar.close()
                     TFH.seek(0)
@@ -441,19 +446,22 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
 
     def save_analysis_output(self, imageId, module_name, module_value, data, module_type=None, directory_data=False):
         if not module_type or module_type == 'base':
-            odir = '/'.join([self.imagerootdir, imageId, "analyzer_output", module_name])
+            odir = Path(self.imagerootdir) / imageId / 'analyzer_output' / module_name
         else:
-            odir = '/'.join([self.imagerootdir, imageId, "analyzer_output_"+module_type, module_name])
+            odir = Path(self.imagerootdir) / imageId / 'analyzer_output_'+module_type / module_name
 
         if not directory_data:
-            thefile = '/'.join([odir, module_value])
-            if not os.path.exists(odir):
+            thefile = Path(odir) / module_value
+            odirpath = Path(odir)
+            if not odirpath.exists():
                 os.makedirs(odir)
 
             return(anchore_utils.write_kvfile_fromdict(thefile, data))
         else:
-            if os.path.isdir(data):
-                if os.path.isdir(odir):
+            data_path = Path(data)
+            if data_path.is_dir():
+                odirpath = Path(odir)
+                if odirpath.is_dir():
                     shutil.rmtree(odir)
                 os.makedirs(odir)
                 shutil.move(data, odir)

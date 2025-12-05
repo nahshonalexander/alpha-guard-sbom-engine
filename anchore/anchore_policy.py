@@ -376,6 +376,7 @@ def read_policy(name=None, file=None, version=default_bundle_version):
     return(ret)
 
 def structure_policy(policydata):
+    
     policies = {}
     for l in policydata:
         l = l.strip()

@@ -14,6 +14,7 @@ def rpm_check_file_membership_from_path(unpackdir, allfiles=None):
     matchfiles = list()
     nonmatchfiles = list()
     realnonmatchfiles = list()
+    #TODO THIS IS WHERE MY ERROR STARTS NOW 
     inpath = os.path.join(unpackdir, 'rootfs')
     rpmdbdir = anchore_utils.rpm_prepdb(unpackdir)
 

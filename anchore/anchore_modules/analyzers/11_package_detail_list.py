@@ -6,6 +6,7 @@ import re
 import json
 import subprocess
 from anchore import anchore_utils
+from pathlib import Path
 
 
 
@@ -15,7 +16,7 @@ def rpm_get_all_packages_detail(unpackdir):
     try:
         rpmdbdir = anchore_utils.rpm_prepdb(unpackdir)
     except:
-        rpmdbdir = os.path.join(unpackdir, 'rootfs', 'var', 'lib', 'rpm')
+        rpmdbdir = Path(unpackdir)/ 'rootfs'/'var'/'lib'/'rpm'
 
     try:
         sout = subprocess.check_output(['rpm', '--dbpath='+rpmdbdir, '--queryformat', '%{NAME}|ANCHORETOK|%{VERSION}|ANCHORETOK|%{RELEASE}|ANCHORETOK|%{ARCH}|ANCHORETOK|%{SIZE}|ANCHORETOK|%{LICENSE}|ANCHORETOK|%{SOURCERPM}|ANCHORETOK|%{VENDOR}\n', '-qa'])
@@ -24,7 +25,8 @@ def rpm_get_all_packages_detail(unpackdir):
             (name, vers, rel, arch, size, lic, source, vendor) = l.split("|ANCHORETOK|")
             vendor = vendor + " (vendor)"
             rpms[name] = {'version':vers, 'release':rel, 'arch':arch, 'size':size, 'license':lic, 'sourcepkg':source, 'origin':vendor, 'type':'rpm'}
-    except:
+    except Exception as e:
+        print(f"FUCK {e}")
         raise ValueError("could not get package list from RPM database: " + str(err))
 
     return(rpms)
@@ -48,8 +50,9 @@ def dpkg_get_all_packages_detail(unpackdir):
                 size = str(0)
 
             try:
-                licfile = '/'.join([unpackdir, 'rootfs/usr/share/doc/', p, 'copyright'])
-                if not os.path.exists(licfile):
+                licfile = Path(unpackdir) /' rootfs/usr/share/doc/' / p / 'copyright'
+                licfile = Path(licfile)
+                if not licfile.exists():
                     lic = "Unknown"
                 else:
                     lics = deb_copyright_getlics(licfile)
@@ -73,7 +76,9 @@ def dpkg_get_all_packages_detail(unpackdir):
 def deb_copyright_getlics(licfile):
     ret = {}
 
-    if os.path.exists(licfile):
+    licfile = Path(licfile)
+
+    if licfile.exists():
         found=False
         FH=open(licfile, 'r')
         lictext = FH.read()
@@ -91,8 +96,10 @@ def deb_copyright_getlics(licfile):
 analyzer_name = "package_list"
 
 try:
+    #THE ISSUE IS HERE!
     config = anchore_utils.init_analyzer_cmdline(sys.argv, analyzer_name)
 except Exception as err:
+    print(f"FUCK {err}")
     print(str(err))
     sys.exit(1)
 
@@ -101,8 +108,10 @@ imgid = config['imgid_full']
 outputdir = config['dirs']['outputdir']
 unpackdir = config['dirs']['unpackdir']
 
-#if not os.path.exists(outputdir):
-#    os.makedirs(outputdir)
+outputdir = Path(outputdir)
+
+if not outputdir.exists():
+   os.makedirs(outputdir)
 
 meta = anchore_utils.get_distro_from_path('/'.join([unpackdir, "rootfs"]))
 distrodict = anchore_utils.get_distro_flavor(meta['DISTRO'], meta['DISTROVERS'], likedistro=meta['LIKEDISTRO'])
@@ -123,7 +132,7 @@ elif distrodict['flavor'] == "DEB":
         print ("WARN: failed to generate DPKG package list: " + str(err))
 elif distrodict['flavor'] == "ALPINE":
     try:
-        pkgs = anchore.anchore_utils.apkg_get_all_pkgfiles(unpackdir)
+        pkgs = anchore_utils.apkg_get_all_pkgfiles(unpackdir)
     except Exception as err:
         print ("WARN: failed to generate APKG package list: " + str(err))
 else:
@@ -134,7 +143,7 @@ if pkgs:
         pkglist[p] = json.dumps(pkgs[p])
 
 if pkglist:
-    ofile = os.path.join(outputdir, 'pkgs.allinfo')
+    ofile = Path(outputdir)/'pkgs.allinfo' 
     anchore_utils.write_kvfile_fromdict(ofile, pkglist)
 
 sys.exit(0)

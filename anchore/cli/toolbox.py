@@ -42,7 +42,6 @@ def toolbox(anchore_config, ctx, image, imageid):
             try:
                 result = anchore_utils.discover_imageIds(imagelist)
             except ValueError as err:
-                print(err)
                 raise err
             else:
                 imagelist = result

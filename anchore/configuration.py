@@ -36,7 +36,7 @@ class AnchoreConfiguration:
     EXAMPLE_CONFIG_DIR = files("anchore") / "conf"
     EXAMPLE_CONFIG_FILE = files("anchore") / "conf" / "config.yaml"
     DEFAULT_PKG_DIR = files("anchore")
-    DEFAULT_SCRIPTS_DIR = files("anchore") / "anchore-modules"
+    DEFAULT_SCRIPTS_DIR = files("anchore") / "anchore_modules"
     DEFAULT_ANON_ANCHORE_USERNAME = 'anon@ancho.re'
     DEFAULT_ANON_ANCHORE_PASSWORD = 'pbiU2RYZ2XrmYQ'
     DEFAULT_ANCHORE_CLIENT_URL = 'https://ancho.re/v1/account/users'
@@ -53,7 +53,7 @@ class AnchoreConfiguration:
     DEFAULT_ANCHORE_SQUASH_DRIVER = "docker_export"
 
     try:
-        DEFAULT_EXTRASCRIPTS_DIR = files("anchore-modules")
+        DEFAULT_EXTRASCRIPTS_DIR = files("anchore_modules")
     except ModuleNotFoundError:
         DEFAULT_EXTRASCRIPTS_DIR = None
 

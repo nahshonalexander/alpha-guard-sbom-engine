@@ -160,7 +160,7 @@ class Analyzer(object):
         return(False)
 
     def list_analyzers(self):
-        analyzerdir = '/'.join([self.config["scripts_dir"], "analyzers"])
+        analyzerdir = Path(self.config["scripts_dir"]) / "analyzers"
         overrides = ['extra_scripts_dir', 'user_scripts_dir']
 
         scripts = {'base':list()}
@@ -170,33 +170,32 @@ class Analyzer(object):
 
         analyzerdir_path = Path(analyzerdir)  
 
-
-        print(analyzerdir_path)
-
         #I can see the path but it keeps breaking....?
-        # if not analyzerdir_path.exists():
-        #     raise Exception("No base analyzers found - please check anchore insallation for completeness")
-        # else:
-        #     for f in os.listdir(analyzerdir):
-        #         script = os.path.join(analyzerdir, f)
-        #         # check the script to make sure its ready to run
-        #         if self.script_is_runnable(script):
-        #             scripts['base'].append(script)
-
-        for f in os.listdir(analyzerdir):
-                script = os.path.join(analyzerdir, f)
+        if not analyzerdir_path.exists():
+            raise Exception("No base analyzers found - please check anchore insallation for completeness")
+        else:
+            for f in analyzerdir_path.iterdir():
+                script = Path(analyzerdir) / f
                 # check the script to make sure its ready to run
-                if self.script_is_runnable(script):
-                    scripts['base'].append(script)
+                if self.script_is_runnable(str(script)):
+                    scripts['base'].append(str(script))
+
+        for f in analyzerdir_path.iterdir():
+                script = Path(analyzerdir) / f
+                # check the script to make sure its ready to run
+                if self.script_is_runnable(str(script)):
+                    scripts['base'].append(str(script))
 
 
         for override in overrides:
-            scripts[override] = list()
+            scripts[override] = []
+
             if self.config[override]:
-                opath = os.path.join(self.config[override], 'analyzers')
-                if os.path.exists(opath):
-                    for f in os.listdir(opath):
-                        script = os.path.join(opath, f)
+                opath = Path(self.config[override]) /  'analyzers'
+                if opath.exists():
+                    for f in opath.iterdir():
+                        Path(opath)/f
+                        script = Path(opath)/f
                         if self.script_is_runnable(script):
                             scripts[override].append(script)
         return(scripts)
@@ -205,10 +204,10 @@ class Analyzer(object):
         success = True
         analyzers = self.list_analyzers()
         imagename = image.meta['imagename']
+        print(imagename)
         #outputdir = image.anchore_imagedir
         shortid = image.meta['shortId']
         imagedir = None
-
         analyzer_status = self.anchoreDB.load_analyzer_manifest(image.meta['imageId'])
         
         analyzer_config = {}
@@ -262,32 +261,36 @@ class Analyzer(object):
                         dorun = False
 
                 outputdir = cmdstr = outstr = ""
+                rc=''
                 if dorun:
                     if not skip:
                         if not imagedir:
                             self._logger.info(image.meta['shortId'] + ": analyzing ...")                            
                             imagedir = image.unpack()
+                            #print(f"imagedir = {imagedir}")
+                            #print(f"contents = {list(Path(imagedir).iterdir())}")
+
                             if not imagedir:
                                 self._logger.error("could not unpack image")
-                                return(False)
-                            
-                        outputdir = tempfile.mkdtemp(dir=imagedir)
-                        cmdline = ' '.join([imagename, self.config['image_data_store'], outputdir, imagedir])
-                        cmdstr = script + " " + cmdline
-                        cmd = cmdstr.split()
+                                return False
+
+
+                        cmd = [sys.executable, script, str(imagedir)]
                         try:
-                            self._logger.debug("running analyzer: " + cmdstr)
-                            timer = time.time()
-                            outstr = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-                            self._logger.debug("analyzer time (seconds): " + str(time.time() - timer))
-                            rc = 0
-                            self._logger.debug("analyzer status: success")
-                            self._logger.debug("analyzer exitcode: " + str(rc))
-                            self._logger.debug("analyzer output: " + outstr)
+                            self._logger.debug("running analyzer: " + str(cmd))
+                            outstr = subprocess.check_output(
+                                cmd,
+                                stderr=subprocess.STDOUT,
+                                text=True,
+                                encoding='utf-8'
+                            )
+                            self._logger.debug(f"Analyzer output:\n{outstr}")
                         except subprocess.CalledProcessError as err:
+                            self._logger.error(f"Analyzer {script} failed with return code {err.returncode}")
+                            self._logger.error(f"Analyzer output:\n{err.output}")
                             rc = err.returncode
-                            outstr = err.output
-                        outstr = outstr.decode('utf8')
+                            skip = True
+                            success = False
                         if rc:
                             status = 'FAILED'
                             skip = True
@@ -320,22 +323,34 @@ class Analyzer(object):
                     results[script]['timestamp'] = time.time()
                     results[script]['status'] = status
 
-                    if os.path.exists(os.path.join(outputdir, 'analyzer_output')):
-                        for d in os.listdir(os.path.join(outputdir, 'analyzer_output')):
-                            if os.path.exists(os.path.join(outputdir, 'analyzer_output', d)):
-                                for dd in os.listdir(os.path.join(outputdir, 'analyzer_output', d)):
-                                    module_name = d
-                                    module_value = dd
-                                    if 'analyzer_outputs' not in results[script]:
-                                        #results[script]['analyzer_outputs'] = {}
-                                        results[script]['analyzer_outputs'] = list()
 
-                                    aoutput = {'module_name':module_name, 'module_value':module_value, 'module_type':mtype}
-                                    if os.path.isdir(os.path.join(outputdir, 'analyzer_output', d, dd)):
-                                        aoutput['data_type'] = 'dir'
+                    analyzer_output_dir = Path(outputdir) / "analyzer_output"
+
+                    if analyzer_output_dir.exists():
+                        for d in analyzer_output_dir.iterdir():
+                            if d.exists() and d.is_dir():
+                                for dd in d.iterdir():
+                                    module_name = d.name
+                                    module_value = dd.name
+
+                                    if "analyzer_outputs" not in results[script]:
+                                        results[script]["analyzer_outputs"] = []
+
+                                    aoutput = {
+                                        "module_name": module_name,
+                                        "module_value": module_value,
+                                        "module_type": mtype,
+                                    }
+
+
+
+                                    if dd.is_dir():
+                                        aoutput["data_type"] = "dir"
                                     else:
-                                        aoutput['data_type'] = 'file'
-                                    results[script]['analyzer_outputs'].append(aoutput)
+                                        aoutput["data_type"] = "file"
+
+                                    results[script]["analyzer_outputs"].append(aoutput)
+
 
                     analyzer_status[script] = {}
                     analyzer_status[script].update(results[script])
@@ -353,18 +368,24 @@ class Analyzer(object):
                 elif result['atype'] == 'extra_scripts_dir':
                     mtype = 'extra'
 
-                if os.path.exists(os.path.join(result['outputdir'], 'analyzer_output')):
-                    for d in os.listdir(os.path.join(result['outputdir'], 'analyzer_output')):
-                        if os.path.exists(os.path.join(result['outputdir'], 'analyzer_output', d)):
-                            for dd in os.listdir(os.path.join(result['outputdir'], 'analyzer_output', d)):
-                                dfile = os.path.join(result['outputdir'], 'analyzer_output', d, dd)
+                analyzer_output_dir = Path(result['outputdir']) / "analyzer_output"
+
+            
+
+                if analyzer_output_dir.exists() :
+                    for d in analyzer_output_dir.iterdir():
+                        if d.exists() and d.is_dir():
+                            for dd in d.iterdir():
+                               
+                                dfile = Path(result['outputdir']) / 'analyzer_output' / d / dd
                                 module_name = d
                                 module_value = dd
-                                if os.path.isfile(dfile):
+        
+                                if dfile.is_file():
                                     adata = anchore_utils.read_kvfile_todict(dfile)
                                     self.anchoreDB.save_analysis_output(image.meta['imageId'], module_name, module_value, adata, module_type=mtype)
                                     didsave = True
-                                elif os.path.isdir(dfile):
+                                elif dfile.is_dir():
                                     self.anchoreDB.save_analysis_output(image.meta['imageId'], module_name, module_value, dfile, module_type=mtype, directory_data=True)
                                     didsave = True
 
@@ -437,12 +458,12 @@ class Analyzer(object):
             self._logger.error("analyzers failed to run on one or more images.")
             return (False)
 
-        #if not self.skipgates:
-        #    # execute gates
-        #    self._logger.debug("running gates post-analysis: begin")
-        #    for imageId in toanalyze.keys():
-        #        c = controller.Controller(anchore_config=self.config, imagelist=[imageId], allimages=self.allimages).run_gates(refresh=True)
-        #    self._logger.debug("running gates post-analysis: end")
+        if not self.skipgates:
+           # execute gates
+           self._logger.debug("running gates post-analysis: begin")
+           for imageId in toanalyze.keys():
+               c = controller.Controller(anchore_config=self.config, imagelist=[imageId], allimages=self.allimages).run_gates(refresh=True)
+           self._logger.debug("running gates post-analysis: end")
 
         self._logger.debug("main image analysis on images: " + str(self.images) + ": end")
         return (success)
