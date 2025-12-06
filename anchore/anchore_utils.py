@@ -2054,7 +2054,7 @@ def write_kvfile_fromlist(file, data_list, delim=' '):
 
 
 def write_kvfile_fromdict(file, indict):
-    data_dict = indict.copy() print(data_dict)
+    data_dict = indict.copy()
     
     with open(file, 'wb') as OFH:
         for k in data_dict.keys():     

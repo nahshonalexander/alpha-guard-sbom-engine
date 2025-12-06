@@ -59,7 +59,6 @@ except Exception as err:
     raise err
 
 if pkglist:
-
     ofile = Path(outputdir) / 'pkgs.gems'
     anchore_utils.write_kvfile_fromdict(ofile, pkglist)
 
