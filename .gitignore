@@ -67,4 +67,4 @@ target/
 $HOME/anchore
 .venv
 <default is $HOME
-asdf/
+asdf/*

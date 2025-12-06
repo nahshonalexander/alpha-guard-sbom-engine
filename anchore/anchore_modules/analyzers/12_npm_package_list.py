@@ -4,6 +4,7 @@ import sys
 import os
 import re
 import json
+from pathlib import Path
 
 
 from anchore import anchore_utils
@@ -28,18 +29,19 @@ pkglist = {}
 
 try:
     allfiles = {}
-    if os.path.exists(unpackdir + "/anchore_allfiles.json"):
-        with open(unpackdir + "/anchore_allfiles.json", 'r') as FH:
+    Path(unpackdir)/"anchore_allfiles.json"
+    if os.path.exists(Path(unpackdir)/"anchore_allfiles.json"):
+        with open(Path(unpackdir)/"anchore_allfiles.json", 'r') as FH:
             allfiles = json.loads(FH.read())
     else:
         fmap, allfiles = anchore_utils.get_files_from_path(unpackdir + "/rootfs")
-        with open(unpackdir + "/anchore_allfiles.json", 'w') as OFH:
+        with open(Path(unpackdir)/"anchore_allfiles.json", 'w') as OFH:
             OFH.write(json.dumps(allfiles))
 
     for tfile in allfiles.keys():
         patt = re.match(".*package\.json$", tfile)
         if patt:
-            thefile = '/'.join([unpackdir, 'rootfs', tfile])
+            thefile = Path(unpackdir) / "rootfs" / tfile
             try:
                 with open(thefile, 'r') as FH:
                     pbuf = FH.read().decode('utf8')

@@ -6,7 +6,7 @@ import shutil
 import re
 import json
 import time
-
+from pathlib import Path
 import subprocess
 
 from anchore import anchore_utils
@@ -31,22 +31,21 @@ pkglist = {}
 
 try:
     allfiles = {}
-    if os.path.exists(unpackdir + "/anchore_allfiles.json"):
-        with open(unpackdir + "/anchore_allfiles.json", 'r') as FH:
+    if os.path.exists((Path(outputdir)/ "anchore_allfiles.json")):
+        with open((Path(outputdir)/ "anchore_allfiles.json"), 'r') as FH:
             allfiles = json.loads(FH.read())
     else:
-        fmap, allfiles = anchore_utils.get_files_from_path(unpackdir + "/rootfs")
-        with open(unpackdir + "/anchore_allfiles.json", 'w') as OFH:
+        fmap, allfiles = anchore_utils.get_files_from_path((Path(unpackdir)/ "rootfs"))
+        with open((Path(unpackdir)/ "anchore_allfiles.json"), 'w') as OFH:
             OFH.write(json.dumps(allfiles))
 
     for tfile in allfiles.keys():
         patt = re.match(r".*specifications.*\.gemspec$", tfile)
         if patt:
-            thefile = '/'.join([unpackdir, 'rootfs', tfile])
+            thefile =  Path(unpackdir) / 'rootfs' / tfile
             try:
                 with open(thefile, 'r') as FH:
                     pdata = FH.read().decode('utf8')
-                    print(pdata)
                     precord = anchore_utils.gem_parse_meta(pdata)
                     for k in precord.keys():
                         record = precord[k]
@@ -60,7 +59,8 @@ except Exception as err:
     raise err
 
 if pkglist:
-    ofile = os.path.join(outputdir, 'pkgs.gems')
+
+    ofile = Path(outputdir) / 'pkgs.gems'
     anchore_utils.write_kvfile_fromdict(ofile, pkglist)
 
 sys.exit(0)

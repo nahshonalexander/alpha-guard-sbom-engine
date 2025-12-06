@@ -6,6 +6,7 @@ import re
 import json
 import subprocess
 import stat
+from pathlib import Path 
 
 from anchore import anchore_utils
 
@@ -15,7 +16,7 @@ def rpm_check_file_membership_from_path(unpackdir, allfiles=None):
     nonmatchfiles = list()
     realnonmatchfiles = list()
     #TODO THIS IS WHERE MY ERROR STARTS NOW 
-    inpath = os.path.join(unpackdir, 'rootfs')
+    inpath = Path(unpackdir)/ 'rootfs'
     rpmdbdir = anchore_utils.rpm_prepdb(unpackdir)
 
     if not allfiles:
@@ -78,7 +79,7 @@ def rpm_check_file_membership_from_path(unpackdir, allfiles=None):
 def dpkg_check_file_membership_from_path(unpackdir, allfiles=None):
     matchfiles = list()
     nonmatchfiles = list()
-    inpath = os.path.join(unpackdir, 'rootfs')
+    inpath = Path(unpackdir)/ 'rootfs'
 
     if not allfiles:
         filemap, allfiles = anchore_utils.get_files_from_path(inpath)
@@ -126,7 +127,7 @@ imgid = config['imgid_full']
 outputdir = config['dirs']['outputdir']
 unpackdir = config['dirs']['unpackdir']
 
-meta = anchore_utils.get_distro_from_path('/'.join([unpackdir, "rootfs"]))
+meta = anchore_utils.get_distro_from_path((Path(unpackdir)/"rootfs"))
 distrodict = anchore_utils.get_distro_flavor(meta['DISTRO'], meta['DISTROVERS'], likedistro=meta['LIKEDISTRO'])
 
 simplefiles = {}
@@ -135,12 +136,13 @@ nonpkgoutfiles = {}
 
 try:
     allfiles = {}
-    if os.path.exists(unpackdir + "/anchore_allfiles.json"):
-        with open(unpackdir + "/anchore_allfiles.json", 'r') as FH:
+    if os.path.exists((Path(unpackdir)/"/anchore_allfiles.json")):
+        with open((Path(unpackdir) / "/anchore_allfiles.json"), 'r') as FH:
             allfiles = json.loads(FH.read())
     else:
-        fmap, allfiles = anchore_utils.get_files_from_path(unpackdir + "/rootfs")
-        with open(unpackdir + "/anchore_allfiles.json", 'w') as OFH:
+        fmap, allfiles = anchore_utils.get_files_from_path((Path(unpackdir) / "/rootfs"))
+    
+        with open((Path(unpackdir) / "/anchore_allfiles.json"), 'w') as OFH:
             OFH.write(json.dumps(allfiles))
 
     # fileinfo
@@ -165,14 +167,14 @@ except Exception as err:
     raise err
 
 if simplefiles:
-    ofile = os.path.join(outputdir, 'files.all')
+    ofile = Path(outputdir) / 'files.all'
     anchore_utils.write_kvfile_fromdict(ofile, simplefiles)
 
 if outfiles:
-    ofile = os.path.join(outputdir, 'files.allinfo')
+    ofile = Path(outputdir) / 'files.allinfo'
     anchore_utils.write_kvfile_fromdict(ofile, outfiles)
 if nonpkgoutfiles:
-    ofile = os.path.join(outputdir, 'files.nonpkged')
+    ofile = Path(outputdir) / 'files.nonpkged'
     anchore_utils.write_kvfile_fromdict(ofile, nonpkgoutfiles)
 
 sys.exit(0)

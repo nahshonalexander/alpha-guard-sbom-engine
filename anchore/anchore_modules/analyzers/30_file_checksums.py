@@ -6,6 +6,7 @@ import re
 import time
 import time
 import hashlib
+from pathlib import Path
 
 from anchore import anchore_utils
 
@@ -22,8 +23,8 @@ imgid = config['imgid_full']
 outputdir = config['dirs']['outputdir']
 unpackdir = config['dirs']['unpackdir']
 
-#if not os.path.exists(outputdir):
-#    os.makedirs(outputdir)
+if not os.path.exists(outputdir):
+   os.makedirs(outputdir)
 
 domd5 = True
 dosha1 = False
@@ -32,17 +33,21 @@ outfiles_sha1 = {}
 outfiles_md5 = {}
 outfiles_sha256 = {}
 
-meta = anchore_utils.get_distro_from_path('/'.join([unpackdir, "rootfs"]))
+
+
+meta = anchore_utils.get_distro_from_path(Path(unpackdir) / "rootfs")
 distrodict = anchore_utils.get_distro_flavor(meta['DISTRO'], meta['DISTROVERS'], likedistro=meta['LIKEDISTRO'])
 if distrodict['flavor'] == "ALPINE":
     dosha1 = True
 
 try:
     timer = time.time()
-    (tmp, allfiles) = anchore_utils.get_files_from_path(unpackdir + "/rootfs")
+    (tmp, allfiles) = anchore_utils.get_files_from_path(Path(unpackdir) / "rootfs")
     for name in allfiles.keys():
-        name = re.sub("^\.", "", name)
-        thefile = '/'.join([unpackdir, "rootfs", name])
+        name = re.sub(r"^\.", "", name)
+        Path(unpackdir) / "rootfs"/ name 
+        thefile = Path(unpackdir) / "rootfs"/ name 
+
 
         csum = "DIRECTORY_OR_OTHER"
         if os.path.isfile(thefile) and not os.path.islink(thefile):
@@ -84,15 +89,16 @@ except Exception as err:
     raise err
 
 if outfiles_sha1:
-    ofile = os.path.join(outputdir, 'files.sha1sums')
+    ofile =  Path(outputdir) / 'files.sha1sums'
     anchore_utils.write_kvfile_fromdict(ofile, outfiles_sha1)
 
 if outfiles_md5:
-    ofile = os.path.join(outputdir, 'files.md5sums')
+    ofile = Path(outputdir) / 'files.md5sums'
     anchore_utils.write_kvfile_fromdict(ofile, outfiles_md5)
 
 if outfiles_sha256:
-    ofile = os.path.join(outputdir, 'files.sha256sums')
+
+    ofile = Path(outputdir) / 'files.sha256sums'
     anchore_utils.write_kvfile_fromdict(ofile, outfiles_sha256)
 
 

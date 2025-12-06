@@ -49,6 +49,7 @@ def init_analyzer_cmdline(argv, name):
 
     if anchore_analyzer_configfile.exists():
         try:
+            anchore_analyzer_configfile =Path(anchore_conf.config_dir)/ 'analyzer_config.yaml'
             with open(anchore_analyzer_configfile, 'r') as FH:
                 anchore_analyzer_config = yaml.safe_load(FH.read())
         except Exception as err:
@@ -62,7 +63,7 @@ def init_analyzer_cmdline(argv, name):
 
     ret['name'] = name
 
-
+    print(argv)
     FH = open(argv[0], 'r', encoding='utf-8')  # make sure encoding matches your file
     ret = {}
     ret['selfcsum'] = hashlib.md5(FH.read().encode('utf-8')).hexdigest()
@@ -82,9 +83,10 @@ def init_analyzer_cmdline(argv, name):
 
     name = "default_name"  # you can set this dynamically if you have a name variable
     output_base = argv[2] if len(argv) > 2 else "/tmp"  # fallback if not provided
-    ret['dirs']['outputdir'] = os.path.join(output_base, "analyzer_output", name)
+    ret['dirs']['outputdir'] = Path(output_base)/ "analyzer_output"/ name
+    print( ret['dirs']['outputdir'])
 
-    ret['dirs']['unpackdir'] = argv[3] if len(argv) > 3 else os.path.join(output_base, "unpack")
+    ret['dirs']['unpackdir'] = argv[3] if len(argv) > 3 else Path(output_base)/ "unpack"
 
     # Create directories if they don't exist
     for key, path in ret['dirs'].items():
@@ -175,8 +177,8 @@ def get_docker_images(cli):
     if not cli:
         return(ret)
 
+    ret = cli.images(all=True)
 
-    ret = cli.images.list(all=True)
 
     return(ret)
 
@@ -188,7 +190,7 @@ def anchore_common_context_setup(config):
         try:
             
             # NOTE: got info from here https://docker-py.readthedocs.io/en/stable/
-            contexts['docker_cli'] = docker.DockerClient(base_url=config['docker_conn'], version='auto', timeout=int(config['docker_conn_timeout']))
+            contexts['docker_cli'] = docker.APIClient(base_url=config['docker_conn'], version='auto', timeout=int(config['docker_conn_timeout']))
             testconn = contexts['docker_cli'].version()
             dimages = get_docker_images(contexts['docker_cli']) 
         except Exception as err:
@@ -503,7 +505,7 @@ def discover_from_info(dockerfile_contents):
 
     if fromline:
         fromline = fromline.lower()
-        if re.match("scratch", fromline) or re.match(".*<unknown>.*", fromline):
+        if re.match(r"scratch", fromline) or re.match(r".*<unknown>.*", fromline):
             fromid = fromline
         else:
             try:
@@ -519,7 +521,7 @@ def get_imageIds_named(name):
         image = result[1]
         if name == imageId:
             ret.append(imageId)
-        elif re.match("^"+name, imageId):
+        elif re.match(r"^"+name, imageId):
             ret.append(imageId)
         elif name in image['anchore_all_tags'] + image['anchore_current_tags'] or name+":latest" in image['anchore_all_tags'] + image['anchore_current_tags']:
             ret.append(imageId)
@@ -1238,9 +1240,9 @@ def get_distro_from_path(inpath):
         'DISTROVERS':None,
         'LIKEDISTRO':None
     }
-
-    if os.path.exists('/'.join([inpath,"/etc/os-release"])):
-        FH=open('/'.join([inpath,"/etc/os-release"]), 'r')
+        
+    if os.path.exists((Path(inpath)/"etc/os-release")):
+        FH=open((Path(inpath)/"etc/os-release"), 'r')
         for l in FH.readlines():
             l = l.strip()
             l = l.decode('utf8')
@@ -1256,8 +1258,8 @@ def get_distro_from_path(inpath):
             except:
                 pass
         FH.close()
-    elif os.path.exists('/'.join([inpath, "/etc/system-release-cpe"])):
-        FH=open('/'.join([inpath, "/etc/system-release-cpe"]), 'r')
+    elif os.path.exists((Path(inpath)/"/etc/system-release-cpe")):
+        FH=open((Path(inpath)/"/etc/system-release-cpe"), 'r')
         for l in FH.readlines():
             l = l.strip()
             l = l.decode('utf8')
@@ -1269,8 +1271,8 @@ def get_distro_from_path(inpath):
             except:
                 pass
         FH.close()
-    elif os.path.exists('/'.join([inpath, "/etc/redhat-release"])):
-        FH=open('/'.join([inpath, "/etc/redhat-release"]), 'r')
+    elif os.path.exists((Path(inpath)/"/etc/redhat-release")):
+        FH=open((Path(inpath)/"/etc/redhat-release"), 'r')
         for l in FH.readlines():
             l = l.strip()
             l = l.decode('utf8')
@@ -1291,21 +1293,23 @@ def get_distro_from_path(inpath):
             except:
                 pass
         FH.close()
-    elif os.path.exists('/'.join([inpath, "/bin/busybox"])):
+    elif os.path.exists((Path(inpath)/"/bin/busybox")):
         meta['DISTRO'] = "busybox"
         try:
-            sout = subprocess.check_output(['/'.join([inpath, "/bin/busybox"])])
+            sout = subprocess.check_output((Path(inpath)/"/bin/busybox"))
             fline = sout.splitlines(True)[0]
             slist = fline.split()
             meta['DISTROVERS'] = slist[1]
         except:
             meta['DISTROVERS'] = "0"
 
-    if meta['DISTRO'] == 'debian' and not meta['DISTROVERS'] and os.path.exists('/'.join([inpath, "/etc/debian_version"])):
-        with open('/'.join([inpath, "/etc/debian_version"]), 'r') as FH:
+
+    if meta['DISTRO'] == 'debian' and not meta['DISTROVERS'] and os.path.exists((Path(inpath)/"/etc/debian_version")):
+        with open((Path(inpath)/"/etc/debian_version"), 'r') as FH:
             meta['DISTRO'] = 'debian'
             for line in FH.readlines():
                 line = line.strip()
+                l = l.decode('utf8')
                 patt = re.match(r"(\d+)\..*", line)
                 if patt:
                     meta['DISTROVERS'] = patt.group(1)
@@ -1347,6 +1351,13 @@ def get_distro_from_path(inpath):
     return(meta)
 
 def get_distro_flavor(distro, version, likedistro=None):
+
+    if isinstance(version, bytes):
+        version = version.decode('utf-8')
+        
+    if isinstance(distro, bytes):
+        distro = distro.decode('utf-8')
+
     ret = {
         'flavor':'Unknown',
         'version':'0',
@@ -1355,6 +1366,7 @@ def get_distro_flavor(distro, version, likedistro=None):
         'likedistro':distro,
         'likeversion':version
     }
+
 
     if distro in ['centos', 'rhel', 'redhat', 'fedora']:
         ret['flavor'] = "RHEL"
@@ -1370,8 +1382,11 @@ def get_distro_flavor(distro, version, likedistro=None):
         ret['likedistro'] = 'centos'
 
     if ret['flavor'] == 'Unknown' and likedistro:
-        likedistros = likedistro.split(',')
-        for distro in likedistros:
+        if isinstance(likedistro, bytes):
+            decoded_likedistro = likedistro.decode('utf-8')
+        else:
+            decoded_likedistro = likedistro
+        for distro in decoded_likedistro:
             if distro in ['centos', 'rhel', 'fedora']:
                 ret['flavor'] = "RHEL"
                 ret['likedistro'] = 'centos'
@@ -1388,7 +1403,7 @@ def get_distro_flavor(distro, version, likedistro=None):
             if ret['flavor'] != 'Unknown':
                 break
 
-    patt = re.match(r"(\d*)\.*(\d*)", version)
+    patt = re.match(r"(\d+)\.*(\d+)\.*(\d+)", version)
     if patt:
         (vmaj, vmin) = patt.group(1,2)
         if vmaj:
@@ -1955,95 +1970,104 @@ def update_file_str(buf, outfile, backup=False):
 
 
 def write_plainfile_fromstr(file, instr):
-    FH=open(file, 'w')
-    thestr = instr.encode('utf8')
-    FH.write(thestr)
-    FH.close()
+    with open(file, 'wb') as FH:
+        thestr = instr.encode('utf8')
+        FH.write(thestr)
 
 def read_plainfile_tostr(file):
     if not os.path.isfile(file):
         return ("")
-    FH = open(file, 'r')
-    ret = FH.read().decode('utf8')
-    FH.close()
-    return (ret)
+    try:
+        with open(file, 'rb') as FH:
+            ret = FH.read().decode('utf8')
+            return ret
+    except Exception:
+        return ("")
 
 
 def read_kvfile_tolist(file):
     if not os.path.isfile(file):
         return([])
 
-    ret = list()
-    FH=open(file, 'r')
-    for l in FH.readlines():
-        l = l.strip().decode('utf8')
-        if l:
-            row = l.split()
-            for i in range(0, len(row)):
-                row[i] = re.sub(r"____", " ", row[i])
-            ret.append(row)
-    FH.close()
-
-    return (ret)
+    ret = []
+    with open(file, 'rb') as FH:
+        for l in FH.readlines():
+            l_str = l.strip().decode('utf8')
+            if l_str:
+                row = l_str.split()
+                row = [re.sub(r"____", " ", item) for item in row]
+                ret.append(row)
+    
+    return ret
 
 def read_plainfile_tolist(file):
     if not os.path.isfile(file):
         return([])
 
-    ret = list()
-    FH=open(file, 'r')
-    for l in FH.readlines():
-        l = l.strip().decode('utf8')
-        if l:
-            ret.append(l)
-    FH.close()
-
-    return (ret)
+    ret = []
+    with open(file, 'rb') as FH:
+        for l in FH.readlines():
+            l_str = l.strip().decode('utf8')
+            if l_str:
+                ret.append(l_str)
+    
+    return ret
 
 def read_kvfile_todict(file):
     if not os.path.isfile(file):
         return ({})
 
     ret = {}
-    FH = open(file, 'r')
-    for l in FH.readlines():
-        l = l.strip().decode('utf8')
-        if l:
-            (k, v) = re.match(r'(\S*)\s*(.*)', l).group(1, 2)
-            k = re.sub(r"____", " ", k)
-            ret[k] = v
-    FH.close()
+    with open(file, 'rb') as FH:
+        for l in FH.readlines():
+            l_str = l.strip().decode('utf8')
+            if l_str:
+                match = re.match(r'(\S*)\s*(.*)', l_str)
+                if match:
+                    k, v = match.group(1, 2)
+                    k = re.sub(r"____", " ", k)
+                    ret[k] = v
+    
+    return ret
 
-    return (ret)
+def write_plainfile_fromlist(file, data_list):
+    with open(file, 'wb') as OFH:
+        for l in data_list:
+            thestr = l + "\n"
+            the_bytes = thestr.encode('utf8')
+            OFH.write(the_bytes)
 
-def write_plainfile_fromlist(file, list):
-    OFH = open(file, 'w')
-    for l in list:
-        thestr = l + "\n"
-        thestr = thestr.encode('utf8')
-        OFH.write(thestr)
-    OFH.close()
 
-def write_kvfile_fromlist(file, list, delim=' '):
-    OFH = open(file, 'w')
-    for l in list:
-        for i in range(0,len(l)):
-            l[i] = re.sub(r"\s", "____", l[i])
-        thestr = delim.join(l) + "\n"
-        thestr = thestr.encode('utf8')
-        OFH.write(thestr)
-    OFH.close()
+def write_kvfile_fromlist(file, data_list, delim=' '):
+    with open(file, 'wb', encoding='utf-8') as OFH:
+        for l in data_list:
+            processed_list = l[:]
+            
+            for i in range(len(processed_list)):
+                processed_list[i] = re.sub(r"\s", "____", processed_list[i])
+                
+            thestr = delim.join(processed_list) + "\n"
+            
+            the_bytes = thestr.encode('utf8')
+            
+            OFH.write(the_bytes)
+
 
 def write_kvfile_fromdict(file, indict):
-    dict = indict.copy()
-    OFH = open(file, 'w', encoding='utf-8')
-    for k in dict.keys():
-        if not dict[k]:
-            dict[k] = "none"
-        cleank = re.sub(r"\s+", "____", k)
-        thestr = ' '.join([cleank, dict[k], '\n'])
-        OFH.write(thestr)
-    OFH.close()
+    data_dict = indict.copy() print(data_dict)
+    
+    with open(file, 'wb') as OFH:
+        for k in data_dict.keys():     
+            current_value = data_dict[k]
+            str_value = str(current_value)
+            if not str_value or str_value.lower() == 'none':
+                str_value = "none"
+
+            cleank = re.sub(r"\s+", "____", k)
+            thestr = ' '.join([cleank, str_value, '\n'])
+            the_bytes = thestr.encode('utf8')
+            OFH.write(the_bytes)
+
 
 def touch_file(file):
     return(open(file, 'a').close())

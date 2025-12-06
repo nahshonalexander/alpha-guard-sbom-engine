@@ -204,7 +204,6 @@ class Analyzer(object):
         success = True
         analyzers = self.list_analyzers()
         imagename = image.meta['imagename']
-        print(imagename)
         #outputdir = image.anchore_imagedir
         shortid = image.meta['shortId']
         imagedir = None
@@ -252,6 +251,8 @@ class Analyzer(object):
                 except:
                     csum = "N/A"
 
+               
+
                 # decide whether or not to run the analyzer
                 dorun = True
                 if self.force:
@@ -267,8 +268,9 @@ class Analyzer(object):
                         if not imagedir:
                             self._logger.info(image.meta['shortId'] + ": analyzing ...")                            
                             imagedir = image.unpack()
-                            #print(f"imagedir = {imagedir}")
-                            #print(f"contents = {list(Path(imagedir).iterdir())}")
+                            # print(imagedir)
+                            # print(f"imagedir = {imagedir}")
+                            # print(f"contents = {list(Path(imagedir).iterdir())}")
 
                             if not imagedir:
                                 self._logger.error("could not unpack image")
@@ -312,6 +314,8 @@ class Analyzer(object):
                         mtype = 'user'
                     elif atype == 'extra_scripts_dir':
                         mtype = 'extra'
+
+                    
 
                     results[script] = {}
                     results[script]['command'] = cmdstr
@@ -448,7 +452,9 @@ class Analyzer(object):
         self._logger.debug("images to be analyzed: " + str(toanalyze.keys()))
         for imageId in toanalyze.keys():
             image = toanalyze[imageId]
+            #TODO: the issue starts here now
             success = self.run_analyzers(image)
+
 
             if not success:
                 self._logger.error("analyzer failed to run on image " + str(image.meta['imagename']) + ", skipping the rest")

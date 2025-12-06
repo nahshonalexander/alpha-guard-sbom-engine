@@ -7,6 +7,7 @@ import json
 import subprocess
 import time
 import copy
+from pathlib import Path
 
 from anchore import anchore_utils
 
@@ -19,7 +20,7 @@ def apk_get_file_package_metadata(unpackdir, record_template):
 
     result = {}
     
-    apkdbpath = os.path.join(unpackdir, 'rootfs', 'lib', 'apk', 'db', 'installed')
+    apkdbpath = Path(unpackdir) / 'rootfs'/ 'lib'/'apk'/ 'db', 'installed'
     try:
         if os.path.exists(apkdbpath):
             buf = None
@@ -35,7 +36,7 @@ def apk_get_file_package_metadata(unpackdir, record_template):
                 fmode = raw_csum = uid = gid = sha1sum = fname = therealfile_apk = therealfile_fs = None
                 for line in buf.splitlines():
                     line = line.strip().decode('utf8')
-                    patt = re.match("(.):(.*)", line)
+                    patt = re.match(r"(.):(.*)", line)
                     if patt:
                         atype = patt.group(1)
                         aval = patt.group(2)
@@ -62,8 +63,8 @@ def apk_get_file_package_metadata(unpackdir, record_template):
                                 fmode = None
                         elif atype == 'Z':
                             raw_csum = aval
-                            fname = '/'.join(['/'+fpath, fname])
-                            therealfile_apk = re.sub("\/+", "/", '/'.join([unpackdir, 'rootfs', fname]))
+                            fname = Path(fpath)/fname
+                            therealfile_apk = re.sub(r"\/+", "/", Path(unpackdir)/"rootfs"/fname)
                             therealfile_fs = os.path.realpath(therealfile_apk)
                             if therealfile_apk == therealfile_fs:
                                 try:
@@ -110,9 +111,9 @@ def deb_get_file_package_metadata(unpackdir, record_template):
             if buf:
                 for line in buf.splitlines():
                     line = line.strip().decode('utf8')
-                    if re.match("^Conffiles:.*", line):
+                    if re.match(r"^Conffiles:.*", line):
                         fmode = True
-                    elif re.match("^.*:.*", line):
+                    elif re.match(r"^.*:.*", line):
                         fmode = False
                     else:
                         if fmode:
@@ -127,14 +128,14 @@ def deb_get_file_package_metadata(unpackdir, record_template):
 
     metafiles = {}
     conffiles = {}
-    metapath = os.path.join(unpackdir, "rootfs", "var", "lib", "dpkg", "info")
+    metapath = Path(unpackdir)/ "rootfs"/ "var"/ "lib"/ "dpkg"/ "info"
     try:
         if os.path.exists(metapath):
             for f in os.listdir(metapath):
-                patt = re.match("(.*)\.md5sums", f)
+                patt = re.match(r"(.*)\.md5sums", f)
                 if patt:
                     pkgraw = patt.group(1)
-                    patt = re.match("(.*):.*", pkgraw)
+                    patt = re.match(r"(.*):.*", pkgraw)
                     if patt:
                         pkg = patt.group(1)
                     else:
@@ -142,10 +143,10 @@ def deb_get_file_package_metadata(unpackdir, record_template):
 
                     metafiles[pkg] = os.path.join(metapath, f)
 
-                patt = re.match("(.*)\.conffiles", f)
+                patt = re.match(r"(.*)\.conffiles", f)
                 if patt:
                     pkgraw = patt.group(1)
-                    patt = re.match("(.*):.*", pkgraw)
+                    patt = re.match(r"(.*):.*", pkgraw)
                     if patt:
                         pkg = patt.group(1)
                     else:
@@ -169,7 +170,7 @@ def deb_get_file_package_metadata(unpackdir, record_template):
                     try:
                         (csum, fname) = line.split()
                         fname = '/' + fname
-                        fname = re.sub("\/\/", "\/", fname)
+                        fname = re.sub(r"\/\/", "\/", fname)
 
                         if fname not in result:
                             result[fname] = []
@@ -285,8 +286,7 @@ imgname = config['imgid']
 imgid = config['imgid_full']
 outputdir = config['dirs']['outputdir']
 unpackdir = config['dirs']['unpackdir']
-
-meta = anchore_utils.get_distro_from_path('/'.join([unpackdir, "rootfs"]))
+meta = anchore_utils.get_distro_from_path(Path(unpackdir/"rootfs"))
 distrodict = anchore_utils.get_distro_flavor(meta['DISTRO'], meta['DISTROVERS'], likedistro=meta['LIKEDISTRO'])
 flavor = distrodict['flavor']
 

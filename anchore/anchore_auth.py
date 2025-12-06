@@ -4,7 +4,7 @@ import requests
 import base64
 import urllib
 import logging
-
+import urllib.parse
 #update how the logger is done
 _logger = logging.getLogger(__name__)
 
@@ -100,8 +100,8 @@ def anchore_auth_refresh(anchore_auth, forcerefresh=False):
 
     username = anchore_auth['username']
     password = anchore_auth['password']
-    url_username = urllib.quote_plus(username)
-    url_password = urllib.quote_plus(password)
+    url_username = urllib.parse.quote_plus(username)
+    url_password = urllib.parse.quote_plus(password)
     client_info_url = anchore_auth['client_info_url']
     token_url = anchore_auth['token_url']
     client_info = anchore_auth['client_info']

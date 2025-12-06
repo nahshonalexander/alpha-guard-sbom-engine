@@ -5,6 +5,7 @@ import os
 import re
 import json
 from anchore import anchore_utils
+from pathlib import Path
 
 analyzer_name = "secret_search"
 
@@ -18,8 +19,8 @@ imgname = config['imgid']
 imageId = config['imgid_full']
 outputdir = config['dirs']['outputdir']
 unpackdir = config['dirs']['unpackdir']
-rootfsdir = '/'.join([unpackdir, 'rootfs'])
 
+rootfsdir = Path(unpackdir) / "rootfs"
 matchparams = list()
 regexps = list()
 if 'analyzer_config' in config and config['analyzer_config']:
@@ -45,19 +46,21 @@ if matchparams:
 
 outputdata = {}
 allfiles = {}
-if os.path.exists(unpackdir + "/anchore_allfiles.json"):
-    with open(unpackdir + "/anchore_allfiles.json", 'r') as FH:
+
+if os.path.exists(Path(unpackdir) / "anchore_allfiles.json"):
+    with open(Path(unpackdir) / "anchore_allfiles.json", 'r') as FH:
         allfiles = json.loads(FH.read())
 else:
     fmap, allfiles = anchore_utils.get_files_from_path(unpackdir + "/rootfs")
-    with open(unpackdir + "/anchore_allfiles.json", 'w') as OFH:
+    with open(Path(unpackdir) / "anchore_allfiles.json", 'w') as OFH:
         OFH.write(json.dumps(allfiles))
 
 results = {}
 pathmap = {}
 # fileinfo                                                                                                                         
 for name in allfiles.keys():
-    thefile = '/'.join([rootfsdir, name])
+    Path(rootfsdir) / name
+    thefile = Path(rootfsdir) / name
     if os.path.isfile(thefile):
 
         dochecks = True
@@ -100,7 +103,7 @@ for name in results.keys():
     outputdata[name] = buf
 
 if outputdata:
-    ofile = os.path.join(outputdir, 'regexp_matches.all')
+    ofile =  Path(outputdir) / "regexp_matches.all"
     anchore_utils.write_kvfile_fromdict(ofile, outputdata)
 
 sys.exit(0)

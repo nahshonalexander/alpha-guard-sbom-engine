@@ -4,7 +4,7 @@ import sys
 import os
 import re
 import json
-
+from pathlib import Path
 from anchore import anchore_utils
 
 analyzer_name = "content_search"
@@ -19,7 +19,7 @@ imgname = config['imgid']
 imageId = config['imgid_full']
 outputdir = config['dirs']['outputdir']
 unpackdir = config['dirs']['unpackdir']
-rootfsdir = '/'.join([unpackdir, 'rootfs'])
+rootfsdir = Path(unpackdir) / "rootfs"
 
 matchparams = list()
 regexps = list()

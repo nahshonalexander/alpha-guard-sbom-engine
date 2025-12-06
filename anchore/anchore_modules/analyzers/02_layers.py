@@ -6,6 +6,7 @@ import re
 import json
 
 from anchore import anchore_utils
+from pathlib import Path
 
 analyzer_name = "layer_info"
 
@@ -19,19 +20,23 @@ imgname = config['imgid']
 outputdir = config['dirs']['outputdir']
 unpackdir = config['dirs']['unpackdir']
 
-#if not os.path.exists(outputdir):
-#    os.makedirs(outputdir)
+if not os.path.exists(outputdir):
+   os.makedirs(outputdir)
 
 output = list()
 
 try:
-    hfile = os.path.join(unpackdir, "docker_history.json")
-    if os.path.exists(hfile):
+    hfile = Path(unpackdir)/ "docker_history.json"
+    if not hfile.exists():
+        hfile.parent.mkdir(parents=True, exist_ok=True)
+        hfile.write_text("{}") 
+    
+    if hfile.exists():
         with open(hfile, 'r') as FH:
             history = json.loads(FH.read())
 
         for record in history:
-            clean_layer = re.sub("^sha256:", "", record['Id'])
+            clean_layer = re.sub(r"^sha256:", "", record['Id'])
             if clean_layer == '<missing>':
                 clean_layer = "unknown"
                 
@@ -39,10 +44,11 @@ try:
             line = {'layer':clean_layer, 'dockerfile_line':clean_createdBy, 'layer_sizebytes':str(record['Size'])}
             output.append(line)
     else:
-        raise Exception("anchore failed to provide file '"+str(hfile)+"': cannot create layer info analyzer output")
+        raise Exception(f"anchore failed to provide file {str(hfile)} cannot create layer info analyzer output")
 except Exception as err:
     import traceback
     traceback.print_exc()
+    print(err)
     raise err
 
 ofile = os.path.join(outputdir, 'layers_to_dockerfile')

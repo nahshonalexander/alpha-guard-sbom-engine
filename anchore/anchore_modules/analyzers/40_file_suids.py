@@ -5,10 +5,9 @@ import os
 import json
 import stat
 
-import anchore_utils
 
 from anchore import anchore_utils
-
+analyzer_name = "file_suids"
 try:
     config = anchore_utils.init_analyzer_cmdline(sys.argv, analyzer_name)
 except Exception as err:

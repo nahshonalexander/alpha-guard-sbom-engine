@@ -2,7 +2,7 @@
 
 import sys
 import os
-
+from pathlib import Path
 
 from anchore import anchore_utils
 
@@ -18,11 +18,11 @@ imgname = config['imgid']
 imgid = config['imgid_full']
 outputdir = config['dirs']['outputdir']
 unpackdir = config['dirs']['unpackdir']
-
-meta = anchore_utils.get_distro_from_path('/'.join([unpackdir, "rootfs"]))
+Path(unpackdir)/"rootfs"
+meta = anchore_utils.get_distro_from_path(Path(unpackdir)/"rootfs")
 distrodict = anchore_utils.get_distro_flavor(meta['DISTRO'], meta['DISTROVERS'], likedistro=meta['LIKEDISTRO'])
 
-print ("analyzer starting up: imageId="+str(imgid) + " meta="+str(meta) + " distrodict="+str(distrodict))
+print("analyzer starting up: imageId="+str(imgid) + " meta="+str(meta) + " distrodict="+str(distrodict))
 
 if distrodict['flavor'] not in ['RHEL', 'DEB', 'BUSYB', 'ALPINE']:
     sys.exit(0)
@@ -37,14 +37,14 @@ if distrodict['flavor'] == "RHEL":
         for pkg in rpms.keys():
             pkgsall[pkg] = rpms[pkg]['version'] + "-" + rpms[pkg]['release']
     except Exception as err:
-        print ("WARN: failed to generate RPM package list: " + str(err))
+        print("WARN: failed to generate RPM package list: " + str(err))
 
     try:
         rpmfiles = anchore_utils.rpm_get_all_pkgfiles(unpackdir)
         for pkgfile in rpmfiles.keys():
             pkgfilesall[pkgfile] = "RPMFILE"
     except Exception as err:
-        print ("WARN: failed to get file list from RPMs: " + str(err))
+        print("WARN: failed to get file list from RPMs: " + str(err))
 
 elif distrodict['flavor'] == "DEB":
     try:
@@ -96,7 +96,7 @@ elif distrodict['flavor'] == 'ALPINE':
                 pkgfilesall[pkgfile] = 'APKFILE'
 
     except Exception as err:
-        print ("WARN: failed to generate APK package list: " + str(err))
+        print("WARN: failed to generate APK package list: " + str(err))
 
 elif distrodict['flavor'] == "BUSYB":
     pkgsall["BusyBox"] = distrodict['fullversion']
@@ -104,15 +104,15 @@ else:
     pkgsall["Unknown"] = "0"
 
 if pkgsall:
-    ofile = os.path.join(outputdir, 'pkgs.all')
+    ofile = Path(outputdir)/ 'pkgs.all'
     anchore_utils.write_kvfile_fromdict(ofile, pkgsall)
     #anchore.anchore_utils.save_analysis_output(imgid, 'package_list', 'pkgs.all', pkgsall)
 if pkgfilesall:
-    ofile = os.path.join(outputdir, 'pkgfiles.all')
+    ofile = Path(outputdir)/ 'pkgfiles.all'
     anchore_utils.write_kvfile_fromdict(ofile, pkgfilesall)
     #anchore.anchore_utils.save_analysis_output(imgid, 'package_list', 'pkgfiles.all', pkgfilesall)
 if pkgsplussource:
-    ofile = os.path.join(outputdir, 'pkgs_plus_source.all')
+    ofile = Path(outputdir)/ 'pkgs_plus_source.all'
     anchore_utils.write_kvfile_fromdict(ofile, pkgsplussource)
     #anchore.anchore_utils.save_analysis_output(imgid, 'package_list', 'pkgs_plus_source.all', pkgsplussource)
 

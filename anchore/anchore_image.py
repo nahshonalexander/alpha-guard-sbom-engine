@@ -3,7 +3,7 @@ import random
 import shutil
 import subprocess
 from textwrap import fill
-
+from pathlib import Path
 import docker
 import sys
 import os
@@ -54,7 +54,7 @@ class AnchoreImage(object):
         self.dockerfile = dockerfile
         self.dockerfile_contents = None
         self.dockerfile_mode = None
-        self.docker_cli = docker.from_env()
+        self.docker_cli =  docker.APIClient(base_url='unix://var/run/docker.sock', version='auto', timeout=300)
         self.docker_data = {}
         self.docker_history = {}
 
@@ -108,7 +108,7 @@ class AnchoreImage(object):
             self.docker_cli = contexts['docker_cli']
         else:
             try:
-                self.docker_cli =  docker.DockerClient(base_url='unix://var/run/docker.sock', version='auto', timeout=300)
+                self.docker_cli =  docker.APIClient(base_url='unix://var/run/docker.sock', version='auto', timeout=300)
             except Exception as err:
                 self._logger.warn("could not establish connection with docker, some operations (analyze) may fail: exception: " + str(err))
 
@@ -621,20 +621,21 @@ class AnchoreImage(object):
             os.makedirs(rootfsdir)
 
         try:
-            container = self.docker_cli.containers.create(self.meta['imageId'], 'true')
+            container = self.docker_cli.create_container(image=self.meta['imageId'], command='ls -l /', detach=True)
+
+            tar_path = imagedir + "/squashed.tar"
+            with open(tar_path, 'wb') as FH:
+                tar_stream = self.docker_cli.export(container)
+                for chunk in tar_stream:
+                    FH.write(chunk)
+    
         except Exception as err:
             self._logger.error("unable to run create container for exporting: " + str(self.meta['imageId']) + ": error: " + str(err))
             return(False)
-        else:
-            tar_path = imagedir + "/squashed.tar"
-            with open(tar_path, 'wb') as FH:
-                tar_stream = container.export()
-                for chunk in tar_stream:
-                    FH.write(chunk)
-
+    
 
         try:
-            container.remove(force=True)
+             self.docker_cli.remove_container(container)
 
         except:
             self._logger.error("unable to delete (cleanup) temporary container - proceeding but zombie container may be left in docker: " + str(err))
@@ -909,6 +910,7 @@ class AnchoreImage(object):
             # store some metadata and dockerfile if present
             self.meta['sizebytes'] = str(os.path.getsize(imagetar))
 
+
         if self.dockerfile_contents:
             anchore_utils.update_file_str(self.dockerfile_contents, os.path.join(imagedir, "Dockerfile"), backup=False)
 
@@ -929,8 +931,8 @@ class AnchoreImage(object):
             self._logger.error("image squash operation failed")
             return(False)
 
-        #if self.squashtar and os.path.exists(self.squashtar):
-        #    self.meta['sizebytes'] = str(os.path.getsize(self.squashtar))
+        if self.squashtar and os.path.exists(self.squashtar):
+           self.meta['sizebytes'] = str(os.path.getsize(self.squashtar))
 
         return (imagedir)
 

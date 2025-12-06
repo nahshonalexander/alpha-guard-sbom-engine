@@ -96,7 +96,7 @@ def deb_copyright_getlics(licfile):
 analyzer_name = "package_list"
 
 try:
-    #THE ISSUE IS HERE!
+    #THE ISSUE IS HEREs
     config = anchore_utils.init_analyzer_cmdline(sys.argv, analyzer_name)
 except Exception as err:
     print(f"FUCK {err}")
@@ -112,8 +112,7 @@ outputdir = Path(outputdir)
 
 if not outputdir.exists():
    os.makedirs(outputdir)
-
-meta = anchore_utils.get_distro_from_path('/'.join([unpackdir, "rootfs"]))
+meta = anchore_utils.get_distro_from_path((Path(unpackdir)/"rootfs")) 
 distrodict = anchore_utils.get_distro_flavor(meta['DISTRO'], meta['DISTROVERS'], likedistro=meta['LIKEDISTRO'])
 
 pkgs = None

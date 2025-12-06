@@ -2,7 +2,7 @@
 
 import sys
 import os
-
+from pathlib import Path
 from anchore import anchore_utils
 
 analyzer_name = "retrieve_files"
@@ -17,10 +17,10 @@ imgname = config['imgid']
 imgid = config['imgid_full']
 outputdir = config['dirs']['outputdir']
 unpackdir = config['dirs']['unpackdir']
-rootfsdir = '/'.join([unpackdir, 'rootfs'])
+rootfsdir = Path(unpackdir) / 'rootfs'
 
-#if not os.path.exists(outputdir):
-#    os.makedirs(outputdir)
+if not os.path.exists(outputdir):
+   os.makedirs(outputdir)
 
 files_to_get = list()
 if 'analyzer_config' in config and config['analyzer_config']:
@@ -34,8 +34,9 @@ if len(files_to_get) <= 0:
 outputdata = {}
 storefiles = list()
 for f in files_to_get:
-    thefile = '/'.join([unpackdir, 'rootfs', f])
-    if os.path.exists(thefile):
+    thefile = Path(unpackdir)/'rootfs'/f
+    thefilepath = Path(thefile)
+    if thefilepath.exists():
         outputdata[f] = thefile
         storefiles.append(thefile)
     else:
@@ -48,7 +49,8 @@ except Exception as err:
     outputdata = {}
     
 if outputdata:
-    ofile = os.path.join(outputdir, 'file_cache.all')
+    Path(outputdir)/ 'file_cache.all'
+    ofile = Path(outputdir)/ 'file_cache.all'
     anchore_utils.write_kvfile_fromdict(ofile, outputdata)
 
 sys.exit(0)
