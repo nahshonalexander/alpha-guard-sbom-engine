@@ -4,7 +4,8 @@ import sys
 import json
 import time
 
-import anchore_utils
+from anchore import anchore_utils
+
 
 gate_name = "ANCHORESEC"
 triggers = {

@@ -3,8 +3,7 @@
 import sys
 import json
 
-import anchore_utils
-import anchore_feeds
+from anchore import anchore_utils
 
 gate_name = "GEMCHECK"
 triggers = {
@@ -41,7 +40,7 @@ triggers = {
 }
 
 try:
-    config = anchore.anchore_utils.init_gate_cmdline(sys.argv, gate_name, gate_help=triggers)
+    config = anchore_utils.init_gate_cmdline(sys.argv, gate_name, gate_help=triggers)
 except Exception as err:
     import traceback
     traceback.print_exc()

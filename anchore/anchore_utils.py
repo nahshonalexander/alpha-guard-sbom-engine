@@ -2181,6 +2181,16 @@ def get_files_from_path(inpath):
     allfiles = {}
     real_root = os.open('/', os.O_RDONLY)
 
+    my_path = Path('/tmp/unpack/rootfs')
+
+    # 2. Call .mkdir() with the necessary safety arguments
+    try:
+        my_path.mkdir(parents=True, exist_ok=True)
+        print(f"Directory successfully ensured: {my_path}")
+    except Exception as e:
+        # This handles rare cases like permission errors
+        print(f"Error creating directory: {e}")
+
     try:
         os.chroot(inpath)
         #for root, dirs, files in os.walk('/', followlinks=True):

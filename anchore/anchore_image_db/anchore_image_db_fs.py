@@ -521,10 +521,10 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         return(ret)
 
     def save_gate_output(self, imageId, gate_name, data):
-        thedir = os.path.join(self.imagerootdir, imageId, 'gates_output')
+        thedir = Path(self.imagerootdir) / imageId /'gates_output'
         if not os.path.exists(thedir):
             os.makedirs(thedir)
-        thefile = os.path.join(thedir, gate_name)
+        thefile = Path(thedir) / gate_name
         return(anchore_utils.write_plainfile_fromlist(thefile, data))
 
     def save_gate_help_output(self, gate_help):

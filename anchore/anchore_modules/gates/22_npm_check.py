@@ -2,8 +2,8 @@
 
 import sys
 import json
-import anchore_utils
-import anchore_feeds
+from anchore import anchore_utils
+from anchore import anchore_feeds
 
 gate_name = "NPMCHECK"
 triggers = {

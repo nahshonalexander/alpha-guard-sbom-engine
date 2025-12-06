@@ -6,6 +6,7 @@ import re
 import json
 import zipfile
 from io import BytesIO
+from pathlib import Path
 
 from anchore import anchore_utils
 analyzer_name = "package_list"
@@ -25,15 +26,15 @@ def process_java_archive(prefix, filename, inZFH):
     ret = []
 
     
-    fullpath = '/'.join([prefix, filename])
+    fullpath =  Path(prefix) / filename
 
     jtype = None
-    patt = re.match(".*\.(jar|war|ear)", fullpath)
+    patt = re.match(r".*\.(jar|war|ear)", fullpath)
     if patt:
         jtype = patt.group(1)
     else:
         return([])
-    name = re.sub("\."+jtype+"$", "", fullpath.split("/")[-1])
+    name = re.sub(r"\."+jtype+"$", "", fullpath.split("/")[-1])
 
     top_el = {}
     sub_els = []
@@ -107,7 +108,7 @@ def process_java_archive(prefix, filename, inZFH):
 
         for zfname in ZFH.namelist():
             sub_jtype = None
-            patt = re.match(".*\.(jar|war|ear)", zfname)
+            patt = re.match(r".*\.(jar|war|ear)", zfname)
             if patt:
                 sub_jtype = patt.group(1)
 
@@ -140,17 +141,19 @@ def process_java_archive(prefix, filename, inZFH):
 resultlist = {}
 try:
     allfiles = {}
-    if os.path.exists(unpackdir + "/anchore_allfiles.json"):
-        with open(unpackdir + "/anchore_allfiles.json", 'r') as FH:
+    (Path(unpackdir) / 'anchore_allfiles.json')
+    if os.path.exists((Path(unpackdir) / 'anchore_allfiles.json')):
+        with open((Path(unpackdir) / 'anchore_allfiles.json'), 'r') as FH:
             allfiles = json.loads(FH.read())
     else:
-        fmap, allfiles = anchore_utils.get_files_from_path(unpackdir + "/rootfs")
-        with open(unpackdir + "/anchore_allfiles.json", 'w') as OFH:
+        
+        fmap, allfiles = anchore_utils.get_files_from_path((Path(unpackdir) / 'rootfs'))
+        with open((Path(unpackdir) / 'anchore_allfiles.json'), 'w') as OFH:
             OFH.write(json.dumps(allfiles))
 
     for f in allfiles.keys():
         if allfiles[f]['type'] == 'file':
-            prefix = '/'.join([unpackdir, 'rootfs'])
+            prefix = Path(unpackdir) / 'rootfs'
             els = process_java_archive(prefix, f.encode('utf8'), None)
             if els:
                 for el in els:
@@ -160,7 +163,8 @@ except Exception as err:
     print("WARN: analyzer unable to complete - exception: " + str(err))
 
 if resultlist:
-    ofile = os.path.join(outputdir, 'pkgs.java')
+    Path(outputdir) / 'pkgs.java'
+    ofile = Path(outputdir) / 'pkgs.java'
     anchore_utils.write_kvfile_fromdict(ofile, resultlist)
 
 sys.exit(0)

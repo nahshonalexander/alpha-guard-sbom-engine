@@ -4,7 +4,8 @@ import sys
 import json
 import re
 
-import anchore_utils
+from anchore import anchore_utils
+
 
 gate_name = "SECRETCHECK"
 triggers = {

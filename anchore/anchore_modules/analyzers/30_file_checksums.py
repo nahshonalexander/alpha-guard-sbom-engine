@@ -35,14 +35,14 @@ outfiles_sha256 = {}
 
 
 
-meta = anchore_utils.get_distro_from_path(Path(unpackdir) / "rootfs")
+meta = anchore_utils.get_distro_from_path((Path(unpackdir) / "rootfs"))
 distrodict = anchore_utils.get_distro_flavor(meta['DISTRO'], meta['DISTROVERS'], likedistro=meta['LIKEDISTRO'])
 if distrodict['flavor'] == "ALPINE":
     dosha1 = True
 
 try:
     timer = time.time()
-    (tmp, allfiles) = anchore_utils.get_files_from_path(Path(unpackdir) / "rootfs")
+    (tmp, allfiles) = anchore_utils.get_files_from_path((Path(unpackdir) / "rootfs"))
     for name in allfiles.keys():
         name = re.sub(r"^\.", "", name)
         Path(unpackdir) / "rootfs"/ name 

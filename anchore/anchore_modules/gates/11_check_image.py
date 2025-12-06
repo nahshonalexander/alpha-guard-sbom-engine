@@ -2,7 +2,7 @@
 
 import sys
 
-import anchore_utils
+from anchore import anchore_utils
 
 gate_name = "IMAGECHECK"
 triggers = {

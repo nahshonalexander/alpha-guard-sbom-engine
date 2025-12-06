@@ -5,8 +5,7 @@ import os
 import re
 import shutil
 import tarfile
-
-import anchore_utils
+from anchore import anchore_utils
 
 def get_retrieved_file(imgid, srcfile, dstdir):
     ret = list()

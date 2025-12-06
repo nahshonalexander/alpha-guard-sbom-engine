@@ -2,8 +2,8 @@
 
 import sys
 
-import anchore_utils
-import anchore_image
+from anchore import anchore_utils
+from anchore import anchore_image
 
 gate_name = "PKGBLACKLIST"
 triggers = {
@@ -70,7 +70,6 @@ try:
                     except:
                         pass
             elif pkey == 'BLACKLIST_VERSIONLESSTHAN':
-                print ("THIS IS NOT IMPLEMENTED YET")
                 sys.exit(1)
                 # not implemented
         except Exception as err:
@@ -79,7 +78,7 @@ try:
 except Exception as err:
     import traceback
     traceback.print_exc()
-    print ("ERROR: could not do something" + str(err))
+    print("ERROR: could not do something" + str(err))
     sys.exit(1)
 
 # write output

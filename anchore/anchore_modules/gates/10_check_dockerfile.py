@@ -2,7 +2,7 @@
 
 import sys
 import re
-import anchore_utils
+from anchore import anchore_utils
 
 gate_name = "DOCKERFILECHECK"
 triggers = {
@@ -79,7 +79,6 @@ if params:
         except:
             pass
 
-# do something
 try:
     ireport = anchore_utils.load_image_report(imgid)
 
@@ -102,22 +101,22 @@ try:
 
             for line in dockerfile_contents.splitlines():
                 line = line.strip()
-                if re.match("^\s*(FROM|"+'FROM'.lower()+")\s+(.*)", line):
-                    fromstr = re.match("^\s*(FROM|"+'FROM'.lower()+")\s+(.*)", line).group(2)
-                elif re.match("^\s*(EXPOSE|"+'EXPOSE'.lower()+")\s+(.*)", line):
-                    exposestr = re.match("^\s*(EXPOSE|"+'EXPOSE'.lower()+")\s+(.*)", line).group(2)
-                elif re.match("^\s*(VOLUME|"+'VOLUME'.lower()+")\s+(.*)", line):
+                if re.match(r"^\s*(FROM|"+'FROM'.lower()+")\s+(.*)", line):
+                    fromstr = re.match(r"^\s*(FROM|"+'FROM'.lower()+")\s+(.*)", line).group(2)
+                elif re.match(r"^\s*(EXPOSE|"+'EXPOSE'.lower()+")\s+(.*)", line):
+                    exposestr = re.match(r"^\s*(EXPOSE|"+'EXPOSE'.lower()+")\s+(.*)", line).group(2)
+                elif re.match(r"^\s*(VOLUME|"+'VOLUME'.lower()+")\s+(.*)", line):
                     volumestr = str(line)
-                elif re.match("^\s*(HEALTHCHECK|"+'HEALTHCHECK'.lower()+")\s+(.*)", line):
+                elif re.match(r"^\s*(HEALTHCHECK|"+'HEALTHCHECK'.lower()+")\s+(.*)", line):
                     healthcheckstr = str(line)
-                elif re.match(".*sudo.*", line):
+                elif re.match(r".*sudo.*", line):
                     sudostr = str(line)
 
             if fromstr:
                 if fromstr == 'SCRATCH' or fromstr.lower() == 'scratch':
                     outlist.append("FROMSCRATCH 'FROM' container is 'scratch' - ("+str(fromstr)+")")
-                elif re.match("(\S+):(\S+)", fromstr):
-                    repo, tag = re.match("(\S+):(\S+)", fromstr).group(1,2)
+                elif re.match(r"(\S+):(\S+)", fromstr):
+                    repo, tag = re.match(r"(\S+):(\S+)", fromstr).group(1,2)
                     if tag == 'latest':
                         outlist.append("NOTAG 'FROM' container does not specify a non-latest container tag - ("+str(fromstr)+")")
                 else:

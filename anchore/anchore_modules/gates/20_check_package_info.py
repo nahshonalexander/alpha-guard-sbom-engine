@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import sys
-import anchore_utils
+from anchore import anchore_utils
+
 
 gate_name = "PKGCHECK"
 triggers = {

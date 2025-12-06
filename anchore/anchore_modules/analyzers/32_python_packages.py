@@ -6,6 +6,7 @@ import re
 import json
 import traceback
 import pkg_resources
+from pathlib import Path
 
 from anchore import anchore_utils
 
@@ -25,17 +26,20 @@ unpackdir = config['dirs']['unpackdir']
 resultlist = {}
 try:
     allfiles = {}
-    if os.path.exists(unpackdir + "/anchore_allfiles.json"):
-        with open(unpackdir + "/anchore_allfiles.json", 'r') as FH:
+    Path(unpackdir/"anchore_allfiles.json")
+    if os.path.exists(Path(unpackdir/"anchore_allfiles.json")):
+        with open(Path(unpackdir/"anchore_allfiles.json"), 'r') as FH:
             allfiles = json.loads(FH.read())
     else:
-        fmap, allfiles = anchore_utils.get_files_from_path(unpackdir + "/rootfs")
-        with open(unpackdir + "/anchore_allfiles.json", 'w') as OFH:
+        Path(unpackdir/"rootfs")
+        fmap, allfiles = anchore_utils.get_files_from_path((Path(unpackdir/"rootfs")))
+        with open(Path(unpackdir/"anchore_allfiles.json"), 'w') as OFH:
             OFH.write(json.dumps(allfiles))
 
     for f in allfiles.keys():
         if allfiles[f]['type'] == 'dir':
-            candidate = '/'.join([unpackdir, 'rootfs', f.encode('utf8')])
+            Path(unpackdir) / 'rootfs' / f
+            candidate = Path(unpackdir) / 'rootfs' / f
             distributions = pkg_resources.find_distributions(candidate)
             for distribution in distributions:
                 el = {}
@@ -43,9 +47,8 @@ try:
                     el['name'] = distribution.project_name
                     el['version'] = distribution.version
                     el['type'] = 'python'
-
-                    prefix = '/'.join([unpackdir, 'rootfs'])
-                    el['location'] = re.sub("^/*"+prefix+"/*", "/", candidate)
+                    prefix = Path(unpackdir) / 'rootfs'
+                    el['location'] = re.sub(r"^/*"+prefix+"/*", "/", candidate)
 
                     # extract file info if available
                     el['files'] = []
@@ -53,7 +56,8 @@ try:
                         record = distribution.get_metadata('RECORD')
                         for line in record.splitlines():
                             pfile, other = line.split(",", 1)
-                            el['files'].append('/'.join([el['location'], pfile]))
+                            (Path(el['location']) / pfile)
+                            el['files'].append((Path(el['location']) / pfile))
                     except:
                         pass
 
@@ -95,7 +99,8 @@ except Exception as err:
     print("WARN: analyzer unable to complete - exception: " + str(err))
 
 if resultlist:
-    ofile = os.path.join(outputdir, 'pkgs.python')
+    Path(outputdir) /  'pkgs.python'
+    ofile = Path(outputdir) /  'pkgs.python'
     anchore_utils.write_kvfile_fromdict(ofile, resultlist)
 
 sys.exit(0)
