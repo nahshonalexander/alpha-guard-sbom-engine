@@ -163,7 +163,6 @@ except Exception as err:
     print("WARN: analyzer unable to complete - exception: " + str(err))
 
 if resultlist:
-    Path(outputdir) / 'pkgs.java'
     ofile = Path(outputdir) / 'pkgs.java'
     anchore_utils.write_kvfile_fromdict(ofile, resultlist)
 

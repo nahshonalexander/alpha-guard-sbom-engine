@@ -7,6 +7,7 @@ import hashlib
 import uuid
 import jsonschema
 import tempfile
+from pathlib import Path
 
 from anchore import controller
 from anchore import anchore_utils, anchore_auth
@@ -762,8 +763,9 @@ def execute_gates(imageId, policies, refresh=True):
     anchore_config = contexts['anchore_config']
 
     imagename = imageId
-    gatesdir = '/'.join([anchore_config["scripts_dir"], "gates"])
-    workingdir = '/'.join([anchore_config['anchore_data_dir'], 'querytmp'])
+    gatesdir =  Path(anchore_config["scripts_dir"]) / "gates"
+    
+    workingdir = Path(anchore_config["anchore_data_dir"]) / "querytmp"
     outputdir = workingdir
 
     _logger.info(imageId + ": evaluating policies...")
@@ -771,12 +773,16 @@ def execute_gates(imageId, policies, refresh=True):
     for d in [outputdir, workingdir]:
         if not os.path.exists(d):
             os.makedirs(d)
-
-    imgfile = '/'.join([workingdir, "queryimages." + str(random.randint(0, 99999999))])
+    
+    imgfile = (Path(workingdir) / f"queryimages.{(str(random.randint(0, 99999999)))}")
+    
     anchore_utils.write_plainfile_fromstr(imgfile, imageId)
     
+    
     try:
+        #TODO: ISSUE IS HERE NOW (FAILED GATES)
         gmanifest, failedgates = anchore_utils.generate_gates_manifest()
+        
         if failedgates:
             _logger.error("some gates failed to run - check the gate(s) modules for errors: "  + str(','.join(failedgates)))
             success = False
@@ -849,6 +855,10 @@ def evaluate_gates_results(imageId, policies, image_whitelist, global_whitelist)
     fullret = list()
     final_gate_action = 'GO'
 
+    print(imageId)
+    print(policies)
+    print(image_whitelist)
+    print(global_whitelist)
     for m in policies.keys():
         gdata = contexts['anchore_db'].load_gate_output(imageId, m)
         for l in gdata:

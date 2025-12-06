@@ -4,7 +4,7 @@ import sys
 import os
 import json
 import stat
-
+from pathlib import Path
 
 from anchore import anchore_utils
 analyzer_name = "file_suids"
@@ -26,12 +26,14 @@ outfiles = {}
 
 try:
     allfiles = {}
-    if os.path.exists(unpackdir + "/anchore_allfiles.json"):
-        with open(unpackdir + "/anchore_allfiles.json", 'r') as FH:
+    (Path(unpackdir) /'anchore_allfiles.json')
+    if os.path.exists((Path(unpackdir) /'anchore_allfiles.json')):
+        with open((Path(unpackdir) /'anchore_allfiles.json'), 'r') as FH:
             allfiles = json.loads(FH.read())
     else:
-        fmap, allfiles = anchore_utils.get_files_from_path(unpackdir + "/rootfs")
-        with open(unpackdir + "/anchore_allfiles.json", 'w') as OFH:
+        (Path(unpackdir) /'rootfs')
+        fmap, allfiles = anchore_utils.get_files_from_path((Path(unpackdir) /'rootfs'))
+        with open((Path(unpackdir) /'anchore_allfiles.json'), 'w') as OFH:
             OFH.write(json.dumps(allfiles))
 
     # fileinfo
@@ -43,7 +45,7 @@ except Exception as err:
     print ("ERROR: " + str(err))
 
 if outfiles:
-    ofile = os.path.join(outputdir, 'files.suids')
+    ofile = os.path.join(Path(outputdir) / 'files.suids')
     anchore_utils.write_kvfile_fromdict(ofile, outfiles)
 
 sys.exit(0)

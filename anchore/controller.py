@@ -84,6 +84,7 @@ class Controller(object):
         except Exception as err:
             policy_data = []
         default_policies = anchore_policy.structure_policy(policy_data)
+        
 
         policy_data = self.anchoreDB.load_gate_policy(image.meta['imageId'])
         image_policies = anchore_policy.structure_policy(policy_data)
@@ -190,11 +191,13 @@ class Controller(object):
         final_gate_action = 'GO'
 
         # prep the input
+        
         policies = self.load_policies(image)
         policies_whitelist = self.load_whitelist(image)
         global_whitelist = self.load_global_whitelist()
 
         # perform the evaluation
+        
         ret, fullret = anchore_policy.evaluate_gates_results(image.meta['imageId'], policies, policies_whitelist, global_whitelist)
 
         # save the results
@@ -258,7 +261,8 @@ class Controller(object):
 
         for imageId in self.images:
             image = self.allimages[imageId]
-            
+           
+            #TODO: NOW THE ISSUE IS HERE
             rc = self.execute_gates(image, refresh=refresh)
             if not rc:
                 raise Exception("one or more gates failed to execute")

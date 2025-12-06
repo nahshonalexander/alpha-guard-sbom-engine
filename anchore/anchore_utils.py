@@ -105,7 +105,7 @@ def init_gate_cmdline(argv, gate_name, gate_help={}):
         if gate_help:
             if argv[1] != 'stdout':
                 gate_help_json = json.dumps(gate_help)
-                thefile = os.path.join(argv[1], gate_name + ".help")
+                thefile = Path(argv[1]) / gate_name / ".help"
                 update_file_jsonstr(gate_help_json, thefile)
             print (json.dumps({gate_name:gate_help}))
         sys.exit(0)
@@ -383,10 +383,12 @@ def generate_gates_manifest():
 #                pass
 
     # make list of all places gate modules can be
-    gatesdir = '/'.join([config["scripts_dir"], "gates"])
-    path_overrides = ['/'.join([config['user_scripts_dir'], 'gates'])]
+    Path(config['user_scripts_dir']/ "gates")
+    gatesdir = Path(config["scripts_dir"]/ "gates")
+    path_overrides = [Path(config['user_scripts_dir']/ "gates")]
     if config['extra_scripts_dir']:
-        path_overrides = path_overrides + ['/'.join([config['extra_scripts_dir'], 'gates'])]
+        Path(config['extra_scripts_dir']) / 'gates'
+        path_overrides = path_overrides + [Path(config['extra_scripts_dir']) / 'gates']
         
     # either generate a new element for the module record in the manifest (if new module or module csum is different from what is in manifest), or skip
     for gdir in path_overrides + [gatesdir]:
