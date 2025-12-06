@@ -382,13 +382,15 @@ def generate_gates_manifest():
 #            except:
 #                pass
 
-    # make list of all places gate modules can be
-    Path(config['user_scripts_dir']/ "gates")
-    gatesdir = Path(config["scripts_dir"]/ "gates")
-    path_overrides = [Path(config['user_scripts_dir']/ "gates")]
-    if config['extra_scripts_dir']:
-        Path(config['extra_scripts_dir']) / 'gates'
-        path_overrides = path_overrides + [Path(config['extra_scripts_dir']) / 'gates']
+    
+
+    gatesdir = Path(config["scripts_dir"]) / "gates"
+
+    path_overrides = [Path(config['user_scripts_dir']) / "gates"]
+
+    if config.get('extra_scripts_dir'):
+        path_overrides.append(Path(config['extra_scripts_dir']) / "gates")
+
         
     # either generate a new element for the module record in the manifest (if new module or module csum is different from what is in manifest), or skip
     for gdir in path_overrides + [gatesdir]:
