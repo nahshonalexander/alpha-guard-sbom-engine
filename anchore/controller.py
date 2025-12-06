@@ -8,6 +8,7 @@ import json
 import random 
 import shutil
 import hashlib
+from pathlib import Path
 
 #from anchore import anchore_utils#, anchore_policy
 from anchore import anchore_policy, anchore_utils
@@ -36,8 +37,8 @@ class Controller(object):
 
         self.anchoreDB = contexts['anchore_db']
 
-        self.default_gatepol = '/'.join([self.config.config_dir, "anchore_gate.policy"])
-        self.default_global_whitelist = os.path.join(self.config.config_dir, "anchore_global.whitelist")
+        self.default_gatepol = Path(self.config.config_dir) /  "anchore_gate.policy"
+        self.default_global_whitelist =  Path(self.config.config_dir) /  "anchore_global.whitelist"
 
         self.policy_override = None
         self.global_whitelist_override = None
