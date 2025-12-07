@@ -26,6 +26,7 @@ from anchore import anchore_image, anchore_image_db
 from anchore.configuration import AnchoreConfiguration
 from anchore.util import contexts, scripting
 from anchore import anchore_auth
+from anchore import anchore_feeds
 
 
 _logger = logging.getLogger(__name__)
@@ -105,7 +106,7 @@ def init_gate_cmdline(argv, gate_name, gate_help={}):
         if gate_help:
             if argv[1] != 'stdout':
                 gate_help_json = json.dumps(gate_help)
-                thefile = Path(argv[1]) / gate_name / ".help"
+                thefile = Path(argv[1]) / (gate_name+".help")
                 update_file_jsonstr(gate_help_json, thefile)
             print (json.dumps({gate_name:gate_help}))
         sys.exit(0)
@@ -372,42 +373,47 @@ def generate_gates_manifest():
     gmanifest = contexts['anchore_db'].load_gates_manifest()
 
     # remove any modules that from manifest that are no longer present on FS
-    for gcommand in gmanifest.keys():
+    for gcommand in list(gmanifest.keys()): 
         if not os.path.exists(gcommand):
             gmanifest.pop(gcommand, None)
-#        else:
-#            try:
-#                if gmanifest[gcommand]['returncode'] != 0:
-#                    failedgates.append(gmanifest[gcommand]['command'])
-#            except:
-#                pass
 
+    # --- Path Initialization ---
     
-
     gatesdir = Path(config["scripts_dir"]) / "gates"
-
     path_overrides = [Path(config['user_scripts_dir']) / "gates"]
 
-    if config.get('extra_scripts_dir'):
+    if config['extra_scripts_dir']:
         path_overrides.append(Path(config['extra_scripts_dir']) / "gates")
 
+    # --- Gate Manifest Generation Loop ---
         
-    # either generate a new element for the module record in the manifest (if new module or module csum is different from what is in manifest), or skip
     for gdir in path_overrides + [gatesdir]:
-        for gcmd in os.listdir(gdir):
-            script = os.path.join(gdir, gcmd)
-            if re.match(r".*~$|.*#$|.*\.pyc", gcmd) or not os.access(script, os.R_OK ^ os.X_OK):
-                # skip tmp and pyc modules
-                # current
+        # Use str() for os.listdir() input
+        for gcmd in os.listdir(str(gdir)): 
+            # Use the Path / operator for joining, 'script' is a Path object
+            script = gdir / gcmd 
+
+            if script.is_dir(): 
+                continue
+                
+            # Use str(script) for os.access() 
+            if re.match(r".*~$|.*#$|.*\.pyc", gcmd) or not os.access(str(script), os.R_OK ^ os.X_OK):
                 continue
 
             try:
-                with open(script, 'r') as FH:
-                    csum = hashlib.md5(FH.read()).hexdigest()
+                # Use str(script) for opening the file
+                with open(str(script), 'r', encoding='utf-8') as FH:
+                    csum = hashlib.md5(FH.read().encode()).hexdigest()
+
+
             except:
                 csum = "N/A"
 
-            if script not in gmanifest or gmanifest[script]['csum'] == 'N/A' or gmanifest[script]['csum'] != csum or gmanifest[script]['returncode'] != 0:
+            # Use the string representation of the path for dictionary key
+            script_key = str(script) 
+
+            # Check manifest using the string key
+            if script_key not in gmanifest or gmanifest[script_key]['csum'] == 'N/A' or gmanifest[script_key]['csum'] != csum or gmanifest[script_key]['returncode'] != 0:
                 el = {
                     'status':'FAIL',
                     'returncode':1,
@@ -419,12 +425,16 @@ def generate_gates_manifest():
                     'type':'gate'
                 }
 
-                cmd = [script, 'stdout', "anchore_get_help"]
+                v_env_python = '/home/solomongray/alpha-guard-sbom-engine/.venv/bin/python'
+                cmd = [v_env_python, script_key, 'stdout', "anchore_get_help"]
+
+
                 try:
                     el['command'] = ' '.join(cmd)
 
                     (rc, sout, cmdstring) = run_command(cmd)
                     el['returncode'] = rc
+                    
                     if rc == 0:
                         el['status'] = 'SUCCESS'
                         try:
@@ -444,7 +454,8 @@ def generate_gates_manifest():
                     if cmdstring not in failedgates:
                         failedgates.append(cmdstring)
 
-                gmanifest[script] = el
+                # Assign to the manifest using the string key
+                gmanifest[script_key] = el
             else:
                 _logger.debug("no change in module, skipping trigger info get: " + str(script))
 
@@ -465,14 +476,20 @@ def discover_gates():
 
 def discover_gates_orig():
     config = contexts['anchore_config']
-    ret = {}
-
-    gatesdir = '/'.join([config["scripts_dir"], "gates"])
+    gatesdir = Path(config["scripts_dir"]) / "gates"
     outputdir = make_anchoretmpdir(config['tmpdir'])
 
-    path_overrides = ['/'.join([config['user_scripts_dir'], 'gates'])]
-    if config['extra_scripts_dir']:
-        path_overrides = path_overrides + ['/'.join([config['extra_scripts_dir'], 'gates'])]
+
+    path_overrides = []
+    user_override_path = Path(config['user_scripts_dir']) / "gates"
+    if user_override_path.exists() and user_override_path.is_dir():
+        path_overrides.append(user_override_path)
+
+
+    if config['extra_scripts_dir']: 
+        extra_override_path = Path(config['extra_scripts_dir']) / "gates"
+        if extra_override_path.exists() and extra_override_path.is_dir():
+            path_overrides.append(extra_override_path)
 
     try:
         results = scripting.ScriptSetExecutor(path=gatesdir, path_overrides=path_overrides).execute(capture_output=True, fail_fast=True, cmdline=' '.join([outputdir, 'anchore_get_help']))
@@ -487,7 +504,7 @@ def discover_gates_orig():
         if match:
             gate_name = match.group(1)
         if gate_name:
-            helpfile = os.path.join(outputdir, d)
+            helpfile = Path(outputdir)/d
             with open(helpfile, 'r') as FH:
                 helpdata = json.loads(FH.read())
             allhelp[gate_name] = helpdata
@@ -795,8 +812,8 @@ def apkg_parse_apkdb(apkdb):
             if thepath:
                 flist = list()
                 for x in thefiles:
-                    flist.append(os.path.join(thepath, x))
-                flist.append(os.path.join(thepath))
+                    flist.append((Path(thepath)/x))
+                flist.append(Path(thepath))
                 allfiles = allfiles + flist
             apkgs[thename]['files'] = allfiles
             apkg = {
@@ -843,8 +860,9 @@ def apkg_parse_apkdb(apkdb):
                 if thepath:
                     flist = list()
                     for x in thefiles:
-                        flist.append(os.path.join(thepath, x))
-                    flist.append(os.path.join(thepath))
+                        (Path(thepath)/x)
+                        flist.append((Path(thepath)/x))
+                    flist.append((Path(thepath)))
                     allfiles = allfiles + flist
 
                 thepath = "/" + v
@@ -938,8 +956,8 @@ def generic_verify_file_packages(unpackdir):
     return({}, None, "", "", 255)
 
 def rpm_verify_file_packages(unpackdir):
-
-    rootfs = os.path.join(unpackdir, 'rootfs')
+    
+    rootfs = Path(unpackdir) / 'rootfs'
     verify_output = verify_error = ""
     verify_exitcode = 255
 
@@ -949,8 +967,8 @@ def rpm_verify_file_packages(unpackdir):
         prepdbpath = rpm_prepdb(unpackdir)
         if not os.path.exists(prepdbpath):
             raise Exception("no prepdbpath created ("+str(prepdbpath)+")")
-
-        tmpdbpath = os.path.join(rootfs, 'tmprpmdb')
+       
+        tmpdbpath = Path(rootfs) / 'tmprpmdb'
         shutil.copytree(prepdbpath, tmpdbpath)
         if not os.path.exists(tmpdbpath):
             raise Exception("no tmpdbpath created ("+str(tmpdbpath)+")")
@@ -2287,10 +2305,14 @@ def run_command(command):
     try:
         _logger.debug("running command: " + str(command))
         sout = subprocess.check_output(command, stderr=subprocess.STDOUT)
-        sout = sout.decode('utf8')
+        
+        if isinstance(sout, bytes):
+            sout = sout.decode('utf8')
         rc = 0
     except subprocess.CalledProcessError as err:
-        sout = err.output.decode('utf8')
+        sout = err.output
+        if isinstance(sout, bytes):
+            sout = sout.decode('utf8')
         rc = err.returncode
     except Exception as err:
         sout = str(err)

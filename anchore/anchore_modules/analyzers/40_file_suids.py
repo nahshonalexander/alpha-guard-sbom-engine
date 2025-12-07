@@ -26,12 +26,10 @@ outfiles = {}
 
 try:
     allfiles = {}
-    (Path(unpackdir) /'anchore_allfiles.json')
     if os.path.exists((Path(unpackdir) /'anchore_allfiles.json')):
         with open((Path(unpackdir) /'anchore_allfiles.json'), 'r') as FH:
             allfiles = json.loads(FH.read())
     else:
-        (Path(unpackdir) /'rootfs')
         fmap, allfiles = anchore_utils.get_files_from_path((Path(unpackdir) /'rootfs'))
         with open((Path(unpackdir) /'anchore_allfiles.json'), 'w') as OFH:
             OFH.write(json.dumps(allfiles))

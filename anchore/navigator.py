@@ -5,6 +5,7 @@ import random
 import shutil
 import logging
 import time
+from pathlib import Path
 
 from anchore import anchore_utils
 from anchore.util import scripting, contexts
@@ -201,20 +202,21 @@ class Navigator(object):
                 ret[imageId] = outdir
         return(ret)
 
-    def run(self):
-        return(True)
-
     def find_query_command(self, action):
         cmdobj = None
         mode = None
         cmd = None
         rc = False
         try:
-            path_overrides = ['/'.join([self.config['user_scripts_dir'], 'queries'])]
+            # FIX: Use Path / operator
+            path_overrides = [Path(self.config['user_scripts_dir']) / 'queries']
             if self.config['extra_scripts_dir']:
-                path_overrides = path_overrides + ['/'.join([self.config['extra_scripts_dir'], 'queries'])]
+                # FIX: Use Path / operator
+                path_overrides.append(Path(self.config['extra_scripts_dir']) / 'queries')
 
-            cmdobj = scripting.ScriptExecutor(path='/'.join([self.config['scripts_dir'], 'queries']), script_name=action, path_overrides=path_overrides)
+            # FIX: Use Path / operator and str() to pass to ScriptExecutor if it expects a string
+            script_path = Path(self.config['scripts_dir']) / 'queries'
+            cmdobj = scripting.ScriptExecutor(path=str(script_path), script_name=action, path_overrides=path_overrides)
             cmd = cmdobj.thecmd
             mode = 'query'
             rc = True
@@ -223,10 +225,15 @@ class Navigator(object):
         except Exception as err:
             errstr = str(err)
             try:
-                path_overrides = ['/'.join([self.config['user_scripts_dir'], 'multi-queries'])]
+                # FIX: Use Path / operator and str()
+                path_overrides = [str(Path(self.config['user_scripts_dir']) / 'multi-queries')]
                 if self.config['extra_scripts_dir']:
-                    path_overrides = path_overrides + ['/'.join([self.config['extra_scripts_dir'], 'multi-queries'])]
-                cmdobj = scripting.ScriptExecutor(path='/'.join([self.config['scripts_dir'], 'multi-queries']), script_name=action, path_overrides=path_overrides)
+                    # FIX: Use Path / operator and str()
+                    path_overrides.append(str(Path(self.config['extra_scripts_dir']) / 'multi-queries'))
+
+                # FIX: Use Path / operator and str()
+                script_path = Path(self.config['scripts_dir']) / 'multi-queries'
+                cmdobj = scripting.ScriptExecutor(path=str(script_path), script_name=action, path_overrides=path_overrides)
                 cmd = cmdobj.thecmd
                 mode = 'multi-query'
                 rc = True
@@ -241,14 +248,15 @@ class Navigator(object):
     def execute_query(self, imglist, se, params):
         success = True
         datadir = self.config['image_data_store']
-        outputdir = '/'.join([self.config['anchore_data_dir'], "querytmp", "query." + str(random.randint(0, 99999999))])
-        if not os.path.exists(outputdir):
-            os.makedirs(outputdir)
-
-        imgfile = '/'.join([self.config['anchore_data_dir'], "querytmp", "queryimages." + str(random.randint(0, 99999999))])
+        # FIX: Use Path / operator
+        outputdir = Path(self.config['anchore_data_dir']) / "querytmp" / ("query." + str(random.randint(0, 99999999)))
+        if not outputdir.exists():
+            outputdir.mkdir(parents=True)
+        # FIX: Use Path / operator
+        imgfile = Path(self.config['anchore_data_dir']) / "querytmp" / ("queryimages." + str(random.randint(0, 99999999)))
         anchore_utils.write_plainfile_fromlist(imgfile, imglist)
 
-        cmdline = ' '.join([imgfile, datadir, outputdir])
+        cmdline = ' '.join([str(imgfile), datadir, str(outputdir)])
         if params:
             cmdline = cmdline + ' ' + ' '.join(params)
 
@@ -271,18 +279,21 @@ class Navigator(object):
                 found = False
                 for f in os.listdir(outputdir):
                     if re.match(r".*\.WARNS", f):
-                        warnfile = '/'.join([outputdir, f])
+                        
+                        warnfile = outputdir / f
                     else:
-                        ofile = '/'.join([outputdir, f])
+                        
+                        ofile = outputdir / f
                         found=True
 
                 if not found:
-                    raise Exception("No output files found after executing query command\n\tCommand Output:\n"+sout+"\n\tInfo: Query command should have produced an output file in: " + outputdir)
+                    raise Exception("No output files found after executing query command\n\tCommand Output:\n"+sout+"\n\tInfo: Query command should have produced an output file in: " + str(outputdir))
 
                 orows = list()
 
                 try:
-                    frows = anchore_utils.read_kvfile_tolist(ofile)
+                
+                    frows = anchore_utils.read_kvfile_tolist(str(ofile))
                     header = frows[0]
                     rowlen = len(header)
                     for row in frows[1:]:
@@ -294,7 +305,8 @@ class Navigator(object):
 
                 if warnfile:
                     try:
-                        meta['warns'] = anchore_utils.read_plainfile_tolist(warnfile)
+    
+                        meta['warns'] = anchore_utils.read_plainfile_tolist(str(warnfile))
                     except:
                         pass
 
@@ -321,10 +333,10 @@ class Navigator(object):
                 self._logger.error("\tException: " + str(err))
                 success = False
         finally:
-            if imgfile and os.path.exists(imgfile):
+            if imgfile and imgfile.exists():
                 os.remove(imgfile)
 
-            if outputdir and os.path.exists(outputdir):
+            if outputdir and outputdir.exists():
                 shutil.rmtree(outputdir)
 
         ret = [success, cmd, meta]
@@ -377,23 +389,26 @@ class Navigator(object):
                 
         else:
             paths = list()
-            paths.append('/'.join([self.config['scripts_dir'], "queries"]))
-            paths.append('/'.join([self.config['scripts_dir'], "multi-queries"]))
+        
+            paths.append(str(Path(self.config['scripts_dir']) / "queries"))
+            paths.append(str(Path(self.config['scripts_dir']) / "multi-queries"))
 
             if self.config['user_scripts_dir']:
-                paths.append('/'.join([self.config['user_scripts_dir'], 'queries']))
-                paths.append('/'.join([self.config['user_scripts_dir'], 'multi-queries']))
+
+                paths.append(str(Path(self.config['user_scripts_dir']) / 'queries'))
+                paths.append(str(Path(self.config['user_scripts_dir']) / 'multi-queries'))
 
             if self.config['extra_scripts_dir']:
-                paths.append('/'.join([self.config['extra_scripts_dir'], 'queries']))
-                paths.append('/'.join([self.config['extra_scripts_dir'], 'multi-queries']))
+    
+                paths.append(str(Path(self.config['extra_scripts_dir']) / 'queries'))
+                paths.append(str(Path(self.config['extra_scripts_dir']) / 'multi-queries'))
 
             for dd in paths:
                 if not os.path.exists(dd):
                     continue
                 for d in os.listdir(dd):
                     command = re.sub(r"(\.py|\.sh)$", "", d)
-                    commandpath = os.path.join(dd, d)
+                    commandpath = os.path.join(dd, d) # os.path.join is fine if dd and d are strings
                     if re.match(r".*\.pyc$", d):
                         continue
 
@@ -472,4 +487,3 @@ class Navigator(object):
                 result['multi'] = output
 
         return(result)
-

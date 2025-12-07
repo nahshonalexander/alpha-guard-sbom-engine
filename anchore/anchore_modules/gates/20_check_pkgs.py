@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import json
@@ -53,7 +53,6 @@ outlist = list()
 
 imageId = config['imgid']
 baseId = config['baseid']
-
 diffdata = anchore_utils.diff_images(imageId, baseId)
 try:
     isdiff = False

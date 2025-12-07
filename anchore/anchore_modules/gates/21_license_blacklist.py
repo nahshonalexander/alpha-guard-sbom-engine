@@ -1,9 +1,7 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 import sys
 import json
 import re
-import anchore_utils
 from anchore import anchore_utils
 
 
@@ -89,19 +87,19 @@ try:
                                 fullmatch = True
                                 fullmatchpkgs.append(pkg+"("+pval+")")
                         except Exception as err:
-                            print ("ERR pval check: ("+pkg+"): " + str(err))
+                            print("ERR pval check: ("+pkg+"): " + str(err))
                             pass
             elif pkey == 'LICBLACKLIST_SUBMATCH':
                 for pval in pvallist.split(","):
                     for pkg in pkglics.keys():
                         try:
                             for lic in pkglics[pkg]:
-                                if re.match(".*"+re.escape(pval)+".*", lic):
+                                if re.match(r".*"+re.escape(pval)+r".*", lic):
                                     submatch = True
                                     submatchpkgs.append(pkg+"("+pval+")")
                                     #submatchpkgs.append(pkg+"("+lic+")")
                         except Exception as err:
-                            print ("ERR pval check: ("+ pkg + "): " + str(err))
+                            print("ERR pval check: ("+ pkg + "): " + str(err))
                             pass
         except Exception as err:
             # couldn't parse param string

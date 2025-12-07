@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import re
@@ -81,7 +81,6 @@ if params:
 
 try:
     ireport = anchore_utils.load_image_report(imgid)
-
     if 'dockerfile_mode' in ireport:
         dockerfile_mode = ireport['dockerfile_mode']
     else:
@@ -101,13 +100,13 @@ try:
 
             for line in dockerfile_contents.splitlines():
                 line = line.strip()
-                if re.match(r"^\s*(FROM|"+'FROM'.lower()+")\s+(.*)", line):
-                    fromstr = re.match(r"^\s*(FROM|"+'FROM'.lower()+")\s+(.*)", line).group(2)
-                elif re.match(r"^\s*(EXPOSE|"+'EXPOSE'.lower()+")\s+(.*)", line):
-                    exposestr = re.match(r"^\s*(EXPOSE|"+'EXPOSE'.lower()+")\s+(.*)", line).group(2)
-                elif re.match(r"^\s*(VOLUME|"+'VOLUME'.lower()+")\s+(.*)", line):
+                if re.match(r"^\s*(FROM|"+'FROM'.lower()+r")\s+(.*)", line):
+                    fromstr = re.match(r"^\s*(FROM|"+'FROM'.lower()+r")\s+(.*)", line).group(2)
+                elif re.match(r"^\s*(EXPOSE|"+'EXPOSE'.lower()+r")\s+(.*)", line):
+                    exposestr = re.match(r"^\s*(EXPOSE|"+'EXPOSE'.lower()+r")\s+(.*)", line).group(2)
+                elif re.match(r"^\s*(VOLUME|"+'VOLUME'.lower()+r")\s+(.*)", line):
                     volumestr = str(line)
-                elif re.match(r"^\s*(HEALTHCHECK|"+'HEALTHCHECK'.lower()+")\s+(.*)", line):
+                elif re.match(r"^\s*(HEALTHCHECK|"+'HEALTHCHECK'.lower()+r")\s+(.*)", line):
                     healthcheckstr = str(line)
                 elif re.match(r".*sudo.*", line):
                     sudostr = str(line)

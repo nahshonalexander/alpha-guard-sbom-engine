@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 import sys
 import json
 from anchore import anchore_utils
@@ -83,6 +82,7 @@ except Exception as err:
     print("ERROR: running gate " + gate_name + " failed: " + str(err))
     sys.exit(1)
 
+print("MASDHOASJFHASL:DJKALS:DJ")
 anchore_utils.save_gate_output(imageId, gate_name, outlist)
 
 sys.exit(0)

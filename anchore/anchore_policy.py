@@ -7,6 +7,7 @@ import hashlib
 import uuid
 import jsonschema
 import tempfile
+import traceback
 from pathlib import Path
 
 from anchore import controller
@@ -105,7 +106,7 @@ def load_policymeta(policymetafile=None):
         ret = contexts['anchore_db'].load_policymeta()
         if not ret:
             # use the system default
-            default_policy_bundle_file = os.path.join(contexts['anchore_config'].config_dir, 'anchore_default_bundle.json')
+            default_policy_bundle_file =Path(contexts['anchore_config'].config_dir)/'anchore_default_bundle.json'
             try:
                 if os.path.exists(default_policy_bundle_file):
                     with open(default_policy_bundle_file, 'r') as FH:
@@ -201,10 +202,10 @@ def verify_policy_bundle(bundle={}):
     bundle_schema = {}
 
     try:
-        bundle_schema_file = os.path.join(contexts['anchore_config']['pkg_dir'], 'schemas', 'anchore-bundle.schema')
+        bundle_schema_file = Path(contexts['anchore_config']['pkg_dir']) / 'schemas'/ 'anchore-bundle.schema'
     except:
         from pkg_resources import Requirement, resource_filename
-        bundle_schema_file = os.path.join(resource_filename("anchore", ""), 'schemas', 'anchore-bundle.schema')
+        bundle_schema_file = Path(resource_filename("anchore", "")) / 'schemas'/ 'anchore-bundle.schema'
 
     try:
         if os.path.exists(bundle_schema_file):
@@ -359,7 +360,7 @@ def extract_whitelist_data(bundle, wlid):
         if wlid == wl['id']:
             return(format_whitelist_data(wl))
 
-# R
+# 
 def read_policy(name=None, file=None, version=default_bundle_version):
     if not name or not file:
         raise Exception("input error")
@@ -758,31 +759,29 @@ def get_mapping_actions(image=None, imageId=None, in_digests=[], bundle={}):
 
 def execute_gates(imageId, policies, refresh=True):
     import random
+    import os
+    # NOTE: You need to ensure 'from pathlib import Path' is at the top of the file 
+    # where this function is defined, as Path is used inside.
 
     success = True
     anchore_config = contexts['anchore_config']
 
     imagename = imageId
-    gatesdir =  Path(anchore_config["scripts_dir"]) / "gates"
-    
-    workingdir = Path(anchore_config["anchore_data_dir"]) / "querytmp"
-    outputdir = workingdir
+    gatesdir =  Path(anchore_config["scripts_dir"]) /"gates"
+    workingdir =  Path(anchore_config['anchore_data_dir']) / 'querytmp'
+    outputdir = workingdir # outputdir is a Path object
 
     _logger.info(imageId + ": evaluating policies...")
     
     for d in [outputdir, workingdir]:
         if not os.path.exists(d):
             os.makedirs(d)
-    
-    imgfile = (Path(workingdir) / f"queryimages.{(str(random.randint(0, 99999999)))}")
-    
+
+    imgfile =  Path(workingdir)/ f"queryimages. {str(random.randint(0, 99999999))}" # imgfile is a Path object
     anchore_utils.write_plainfile_fromstr(imgfile, imageId)
     
-    
     try:
-        #TODO: ISSUE IS HERE NOW (FAILED GATES)
         gmanifest, failedgates = anchore_utils.generate_gates_manifest()
-        
         if failedgates:
             _logger.error("some gates failed to run - check the gate(s) modules for errors: "  + str(','.join(failedgates)))
             success = False
@@ -791,6 +790,7 @@ def execute_gates(imageId, policies, refresh=True):
             for gatecheck in policies.keys():
                 # get all commands that match the gatecheck
                 gcommands = []
+                
                 for gkey in gmanifest.keys():
                     if gmanifest[gkey]['gatename'] == gatecheck:
                         gcommands.append(gkey)
@@ -798,15 +798,24 @@ def execute_gates(imageId, policies, refresh=True):
                 # assemble the params from the input policy for this gatecheck
                 params = []
                 for trigger in policies[gatecheck].keys():
-                    if 'params' in policies[gatecheck][trigger] and policies[gatecheck][trigger]['params']:
-                        params.append(policies[gatecheck][trigger]['params'])
-
+                    p = policies[gatecheck][trigger].get('params')
+                    if p:
+                        # FIX #2: Handle if 'params' is a string (e.g., 'DENIEDPORTS=22') 
+                        # or a list (e.g., ['DENIEDPORTS=22']) to avoid iterating over characters.
+                        if isinstance(p, str):
+                            params.append(p)
+                        elif isinstance(p, list):
+                            params.extend(p)
+                        
                 if not params:
                     params = ['all']
 
                 if gcommands:
                     for command in gcommands:
-                        cmd = [command] + [imgfile, anchore_config['image_data_store'], outputdir] + params
+
+                        venv_python = sys.executable
+                        cmd =  [venv_python]+[command] + [str(imgfile), anchore_config['image_data_store'], str(outputdir)] + params
+                        
                         _logger.debug("running gate command: " + str(' '.join(cmd)))
 
                         (rc, sout, cmdstring) = anchore_utils.run_command(cmd)
@@ -815,6 +824,8 @@ def execute_gates(imageId, policies, refresh=True):
                             _logger.error("\tCMD: " + str(cmdstring))
                             _logger.error("\tEXITCODE: " + str(rc))
                             _logger.error("\tOUTPUT: " + str(sout))
+                            _logger.error(traceback.format_exc())
+
                             success = False
                         else:
                             _logger.debug("")
@@ -839,7 +850,6 @@ def execute_gates(imageId, policies, refresh=True):
         _logger.info(imageId + ": evaluated.")
 
     return(success)
-
 def generate_gates_report(imageId):
     # this routine reads the results of image gates and generates a formatted report
     report = {}
@@ -855,10 +865,7 @@ def evaluate_gates_results(imageId, policies, image_whitelist, global_whitelist)
     fullret = list()
     final_gate_action = 'GO'
 
-    print(imageId)
-    print(policies)
-    print(image_whitelist)
-    print(global_whitelist)
+ 
     for m in policies.keys():
         gdata = contexts['anchore_db'].load_gate_output(imageId, m)
         for l in gdata:
@@ -867,7 +874,7 @@ def evaluate_gates_results(imageId, policies, image_whitelist, global_whitelist)
             check = m
             trigger = k
             output = v
-            triggerId = hashlib.md5(''.join([check,trigger,output])).hexdigest()                
+            triggerId = hashlib.md5(''.join([check,trigger,output]).encode('utf-8')).hexdigest()             
 
             # if the output is structured (i.e. decoded as an
             # anchore compatible json string) then extract the
@@ -906,12 +913,12 @@ def evaluate_gates_results(imageId, policies, image_whitelist, global_whitelist)
                                     if gmod == 'ANCHORESEC' and not re.match(r".*\*.*", gtriggerId) and re.match(r"^CVE.*|^RHSA.*", gtriggerId):
                                         gtriggerId = gtriggerId + "*"
                                 except Exception as err:
-                                    _logger.warn("problem with backward compat modification of whitelist trigger - exception: " + str(err))
+                                    _logger.warning("problem with backward compat modification of whitelist trigger - exception: " + str(err))
 
                                 matchtoks = []
                                 for tok in gtriggerId.split("*"):
                                     matchtoks.append(re.escape(tok))
-                                rematch = "^" + '(.*)'.join(matchtoks) + "$"
+                                rematch = r"^" + r'(.*)'.join(matchtoks) + "$"
                                 _logger.debug("checking regexp wl<->triggerId for match: " + str(rematch) + " : " + str(triggerId))
                                 if re.match(rematch, triggerId):
                                     _logger.debug("found wildcard whitelist match")
@@ -920,7 +927,7 @@ def evaluate_gates_results(imageId, policies, image_whitelist, global_whitelist)
                                     break
 
                     except Exception as err:
-                        _logger.warn("problem with prefix wildcard match routine - exception: " + str(err))
+                        _logger.warning("problem with prefix wildcard match routine - exception: " + str(err))
 
                 fullr = {}
                 fullr.update(r)
@@ -1027,12 +1034,12 @@ if __name__ == '__main__':
     with open("/tmp/a", 'w') as OFH:
         OFH.write(json.dumps(result, indent=4))
 
-    try:
-        result, image_ecode = run_bundle_stateless(anchore_config=config, image='alpine', matchtags=[], bundle=thebun)
-        with open("/tmp/b", 'w') as OFH:
-            OFH.write(json.dumps(result, indent=4))
+    # try:
+    #     result, image_ecode = run_bundle_stateless(anchore_config=config, image='alpine', matchtags=[], bundle=thebun)
+    #     with open("/tmp/b", 'w') as OFH:
+    #         OFH.write(json.dumps(result, indent=4))
 
-    except Exception as err:
-        import traceback
-        traceback.print_exc()
-        print(str(err))
+    # except Exception as err:
+    #     import traceback
+    #     traceback.print_exc()
+    #     print(str(err))

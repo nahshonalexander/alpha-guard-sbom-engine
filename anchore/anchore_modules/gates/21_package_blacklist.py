@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 
@@ -46,6 +46,7 @@ outlist = list()
 # do somthing
 try:
     image = anchore_image.AnchoreImage(imgid, allimages={})
+
 
     for pstr in params:
         try:

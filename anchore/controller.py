@@ -195,6 +195,7 @@ class Controller(object):
         policies = self.load_policies(image)
         policies_whitelist = self.load_whitelist(image)
         global_whitelist = self.load_global_whitelist()
+        
 
         # perform the evaluation
         
@@ -267,7 +268,9 @@ class Controller(object):
             if not rc:
                 raise Exception("one or more gates failed to execute")
 
+
             results, fullresults = self.evaluate_gates_results(image)
+            print('MAN ESOIRHJSIOEH')
                 
             record = anchore_policy.structure_eval_results(imageId, fullresults, show_triggerIds=self.show_triggerIds, show_whitelisted=self.show_whitelisted, imageName=image.get_human_name())
 
@@ -332,7 +335,7 @@ class Controller(object):
             else:
                 tmpdir = anchore_utils.make_anchoretmpdir("/tmp")
                 try:
-                    thefile = os.path.join(tmpdir, "anchorepol."+imageId)
+                    thefile = (Path(tmpdir)/ ("anchorepol."+imageId))
                     anchore_utils.write_plainfile_fromlist(thefile, data)
                     if "EDITOR" in os.environ:
                         cmd = os.environ["EDITOR"].split()

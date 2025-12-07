@@ -7,11 +7,11 @@ import tarfile
 from pathlib import Path
 from anchore import anchore_utils
 from . import anchore_image_db_base
-
+from .anchore_image_db_base import AnchoreImageDB
 
 def load(config={}):
     return(AnchoreImageDB_FS(config=config))
-
+#TODO: Take out the double paths that are not needed... you did the quick way like a dummy
 class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
     _db_metadata_filename = 'anchore_db_meta.json'
 
@@ -173,9 +173,11 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         :param with_expected_db_version:
         :return:
         """
-        dbmetafile = os.path.join(path, AnchoreImageDB._db_metadata_filename)
+        dbmetafile = Path(path)/ AnchoreImageDB._db_metadata_filename
+        dbmetafile_path = Path(dbmetafile)
+        new_path = Path(path)
 
-        if not os.path.exists(path) or not os.path.exists(dbmetafile):
+        if not new_path.exists() or not dbmetafile_path.exists():
             return False
 
         if with_expected_db_version:
@@ -188,8 +190,10 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
             return True
 
     def is_image_present(self, imageId, imagelist=None):
-        thefile = '/'.join([self.imagerootdir, imageId])
-        if not os.path.exists(thefile):
+        Path(self.imagerootdir) / imageId
+        thefile = Path(self.imagerootdir) / imageId
+        thefilepath = Path(thefile)
+        if not thefilepath.exists():
             return(False)
         return(True)
 
@@ -210,7 +214,7 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
     def get_image_list(self):
         ret = {}
         for d in os.listdir(self.imagerootdir):
-            if os.path.exists(os.path.join(self.imagerootdir, d, "analyzers.done")):
+            if os.path.exists((Path(self.imagerootdir) / d / "analyzers.done")):
                 t = self.load_image_report(d)
                 ret[d] = list(set(t['anchore_all_tags']) | set(t['anchore_current_tags']))
         return(ret)
@@ -238,8 +242,8 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
                 pass
 
     def delete_image(self, imageId):
-        imagedir = '/'.join([self.imagerootdir, imageId])
-        if os.path.exists(imagedir):
+        imagedir = Path(self.imagerootdir) /imagedir
+        if imagedir.exists():
             shutil.rmtree(imagedir)
             
     def load_image(self, imageId):
@@ -289,15 +293,17 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         return(self.make_image_structure(imageId))
 
     def make_image_structure(self, imageId):
-        imgdir = os.path.join(self.imagerootdir, imageId)
+    
+        imgdir = Path(self.imagerootdir) /imageId
         subdirs = ['analyzer_output', 'analyzer_output_extra', 'analyzer_output_user', 'gates_output', 'image_output', 'reports']
-        
-        if not os.path.exists(imgdir):
+        imgdir_path = Path(imgdir)
+        if not imgdir_path.exists():
             os.makedirs(imgdir)
+            
 
         for d in subdirs:
-            if not os.path.exists(os.path.join(imgdir, d)):
-                os.makedirs(os.path.join(imgdir, d))
+            if not os.path.exists((Path(imgdir)/d)):
+                os.makedirs((Path(imgdir)/d))
         return(True)
 
     def save_image_new(self, imageId, report=None):
@@ -333,22 +339,26 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
             self.save_gate_output(imageId, gname, report['gates_report'][gname])
 
         # populate image metadata
-        thedir = os.path.join(self.imagerootdir, imageId, "image_output", "image_info")
-        if not os.path.exists(thedir):
+        Path(self.imagerootdir) / imageId/"image_output"/ "image_info"
+        thedir = Path(self.imagerootdir) / imageId/"image_output"/ "image_info"
+        thedir_path = Path(thedir)
+        if not thedir_path.exists():
             os.makedirs(thedir)
 
-        thefile = os.path.join(thedir, "image.meta")
+        thefile = Path(thedir) / "image.meta"
         anchore_utils.write_kvfile_fromdict(thefile, report['image_report']['meta'])
 
-        thefile = os.path.join(thedir, "Dockerfile")
+        thefile = Path(thedir) / "Dockerfile"
         anchore_utils.write_plainfile_fromstr(thefile, report['image_report']['dockerfile_contents'])
 
         return(True)
                 
     def load_query_manifest(self):
         ret = {}
-        thefile = os.path.join(self.imagerootdir, 'query_manifest.json')
-        if os.path.exists(thefile):
+        
+        thefile = Path(self.imagerootdir) / 'query_manifest.json'
+        thefilepath = Path(thefile)
+        if thefilepath.exists():
             with open(thefile, 'r') as FH:
                 try:
                     ret = json.loads(FH.read())
@@ -357,27 +367,35 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         return(ret)
 
     def save_query_manifest(self, data):
-        thefile = os.path.join(self.imagerootdir, 'query_manifest.json')
+        thefile = Path(self.imagerootdir) / 'query_manifest.json'
         if data:
             with open(thefile, 'w') as FH:
                 FH.write(json.dumps(data))
         return(True)
 
-    def load_analysis_report(self, imageId):
-        thefile = self.imagerootdir + "/" + imageId + "/reports/analysis_report.json"
-        if not os.path.exists(thefile):
-            return({})
 
-        FH = open(thefile, 'r')
-        ret = json.loads(FH.read())
-        FH.close()
-        return(ret)
+    def load_analysis_report(self, imageId):
+        
+        thefile = Path(self.imagerootdir) / imageId / "reports/analysis_report.json"
+        
+        if not thefile.exists():
+            return {} 
+        try:
+            with open(thefile, 'r') as FH:
+                ret = json.loads(FH.read())
+            return ret
+        except Exception as e:
+            # Handle cases where file exists but is corrupted or unreadable
+            print(f"Error loading analysis report {thefile}: {e}")
+            return {} # Or re-raise the exception, depending on your error handling policy
 
     def save_analysis_report(self, imageId, report):
-        thedir = self.imagerootdir + "/" + imageId + "/reports/"
-        if not os.path.exists(thedir):
+        
+        thedir = Path(self.imagerootdir) /imageId /'reports'
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
-        thefile = thedir + "/analysis_report.json"
+        thefile =  Path(thedir) /"analysis_report.json"
         anchore_utils.update_file_jsonstr(json.dumps(report), thefile, False)
 
     def list_analysis_outputs(self, imageId):
@@ -468,8 +486,9 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
 
     def load_gates_manifest(self):
         ret = {}
-        thefile = os.path.join(self.imagerootdir, 'gates_manifest.json')
-        if os.path.exists(thefile):
+        thefile = Path(self.imagerootdir) / 'gates_manifest.json'
+        thefilepath = Path(thefile)
+        if thefilepath.exists():
             with open(thefile, 'r') as FH:
                 try:
                     ret = json.loads(FH.read())
@@ -478,15 +497,18 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         return(ret)
 
     def save_gates_manifest(self, data):
-        thefile = os.path.join(self.imagerootdir, 'gates_manifest.json')
+
+        thefile = Path(self.imagerootdir) /'gates_manifest.json'
         if data:
             with open(thefile, 'w') as FH:
                 FH.write(json.dumps(data))
+
         return(True)
 
     def load_gates_report(self, imageId):
-        thefile = self.imagerootdir + "/" + imageId + "/reports/gates_report.json"
-        if not os.path.exists(thefile):
+        thefile = Path(self.imagerootdir) / imageId / "reports/gates_report.json"
+        thefilepath = Path(thefile)
+        if thefilepath.exists():
             return({})
 
         FH = open(thefile, 'r')
@@ -495,22 +517,24 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         return(ret)
 
     def save_gates_report(self, imageId, report):
-        thedir = self.imagerootdir + "/" + imageId + "/reports/"
-        if not os.path.exists(thedir):
+        thedir = Path(self.imagerootdir) / imageId / "reports"
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
-        thefile = thedir + "/gates_report.json"
+        thefile = Path(thedir) /"gates_report.json"
         anchore_utils.update_file_jsonstr(json.dumps(report), thefile, False)
 
     
     def load_gate_output(self, imageId, gate_name):
-        thedir = os.path.join(self.imagerootdir, imageId, 'gates_output')
-        thefile = os.path.join(thedir, gate_name)
+        thedir = Path(self.imagerootdir) / imageId/ 'gates_output'
+        thefile =  Path(thedir) / gate_name
         return(anchore_utils.read_plainfile_tolist(thefile))
 
     def list_gate_outputs(self, imageId):
         ret = list()
-        thedir = os.path.join(self.imagerootdir, imageId, 'gates_output')
-        if not os.path.exists(thedir):
+        thedir = Path(self.imagerootdir) / imageId /'gates_output'
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             return(ret)
         for d in os.listdir(thedir):
             if re.match(r".*\.eval$", d) or re.match(r".*\.help$", d):
@@ -528,22 +552,25 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         return(anchore_utils.write_plainfile_fromlist(thefile, data))
 
     def save_gate_help_output(self, gate_help):
-        thedir = os.path.join(self.imagerootdir)
-        if not os.path.exists(thedir):
+        thedir = Path(self.imagerootdir)
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
-        thefile = os.path.join(thedir, "gates_info.json")
+        thefile = Path(thedir) / "gates_info.json"
         rc = anchore_utils.update_file_jsonstr(json.dumps(gate_help), thefile)
         return(rc)
 
     def save_gate_eval_output(self, imageId, gate_name, data):
-        thedir = os.path.join(self.imagerootdir, imageId, "gates_output")
-        if not os.path.exists(thedir):
+        thedir = Path(self.imagerootdir) / imageId / "gates_output"
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
-        thefile = os.path.join(thedir, gate_name+".eval")
+       
+        thefile =  Path(thedir) /(gate_name+".eval")
         return(anchore_utils.write_plainfile_fromlist(thefile, data))
 
     def del_gate_eval_output(self, imageId, gate_name):
-        thefile = os.path.join(self.imagerootdir, imageId, "gates_output", imageId, gate_name)
+        thefile = Path(self.imagerootdir) / imageId / "gates_output" / imageId / gate_name
         if os.path.exists(thefile):
             try:
                 os.remove(thefile)
@@ -552,8 +579,9 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         return(True)
 
     def load_gates_eval_report(self, imageId):
-        thefile = self.imagerootdir + "/" + imageId + "/reports/gates_eval_report.json"
-        if not os.path.exists(thefile):
+        thefile = Path(self.imagerootdir) /imageId / "reports/gates_eval_report.json"
+        thefilepath = Path(thefile)
+        if not thefilepath.exists():
             return({})
 
         FH = open(thefile, 'r')
@@ -562,25 +590,27 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         return(ret)
 
     def save_gates_eval_report(self, imageId, report):
-        thedir = self.imagerootdir + "/" + imageId + "/reports/"
-        if not os.path.exists(thedir):
+        thedir =  Path(self.imagerootdir) / imageId / "reports"
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
-        thefile = thedir + "/gates_eval_report.json"
+        thefile = Path(thedir) / "gates_eval_report.json"
         anchore_utils.update_file_jsonstr(json.dumps(report), thefile, False)
 
     def load_gate_policy(self, imageId):
-        thefile = os.path.join(self.imagerootdir, imageId, 'anchore_gate.policy')
+        thefile = Path(self.imagerootdir) / imageId / 'anchore_gate.policy'
         return(anchore_utils.read_plainfile_tolist(thefile))
 
     def save_gate_policy(self, imageId, data):
-        thedir = os.path.join(self.imagerootdir, imageId)
-        if not os.path.exists(thedir):
+        thedir = Path(self.imagerootdir) / imageId 
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
-        thefile = os.path.join(thedir, "anchore_gate.policy")
+        thefile = Path(thedir) / "anchore_gate.policy"
         return(anchore_utils.write_plainfile_fromlist(thefile, data))
 
     def del_gate_policy(self, imageId):
-        thefile = os.path.join(self.imagerootdir, imageId, 'anchore_gate.policy')
+        thefile = Path(self.imagerootdir) / imageId / 'anchore_gate.policy'
         try:
             os.remove(thefile)
         except:
@@ -588,19 +618,21 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         return(True)
 
     def load_gate_whitelist(self, imageId):
-        thefile = os.path.join(self.imagerootdir, imageId, 'anchore_gate.whitelist')
+        thefile =  Path(self.imagerootdir) / imageId /'anchore_gate.whitelist'
         return(anchore_utils.read_plainfile_tolist(thefile))
 
     def save_gate_whitelist(self, imageId, data):
-        thedir = os.path.join(self.imagerootdir, imageId)
-        if not os.path.exists(thedir):
+        thedir = Path(self.imagerootdir) / imageId 
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
-        thefile = os.path.join(thedir, 'anchore_gate.whitelist')
+        thefile = Path(thedir)/ 'anchore_gate.whitelist'
         return(anchore_utils.write_plainfile_fromlist(thefile, data))
 
     def load_image_report(self, imageId):
-        thefile = self.imagerootdir + "/" + imageId + "/reports/image_report.json"
-        if not os.path.exists(thefile):
+        thefile = Path(self.imagerootdir) / imageId / "reports/image_report.json"
+        thefilepath = Path(thefile)
+        if not thefilepath.exists():
             return({})
 
         ret = {}
@@ -615,22 +647,25 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
 
     def save_image_report(self, imageId, report):
         # populate image metadata
-        thedir = os.path.join(self.imagerootdir, imageId, "image_output", "image_info")
-        if not os.path.exists(thedir):
+        thedir = Path(self.imagerootdir) / imageId/"image_output" /"image_info"
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
 
-        thefile = os.path.join(thedir, "image.meta")
+        thefile =  Path(thedir) / "image.meta"
         if 'meta' in report:
             anchore_utils.write_kvfile_fromdict(thefile, report['meta'])
 
         # save the report itself
         date = str(int(time.time()))
-        thedir = self.imagerootdir + "/" + imageId + "/reports/"
-        if not os.path.exists(thedir):
+        thedir =  Path(self.imagerootdir) / imageId/"reports"
+        thedirpath = Path(thedir) 
+        if not thedirpath.exists():
             os.makedirs(thedir)
-        thefile = thedir + "/image_report.json"
+        thefile = Path(thedir) / "image_report.json"
+        thefilepath =Path(thefile)
 
-        if os.path.exists(thefile):
+        if thefilepath.exists():
             oldreport = self.load_image_report(imageId)
             if 'tag_history' in oldreport:
                 report['tag_history'] = list(oldreport['tag_history'])
@@ -655,9 +690,9 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
 
     def save_files(self, imageId, namespace, rootfsdir, files):
         def tarfilter(member):
-            subber = re.sub("^/*", "", rootfsdir)
-            subber = re.sub("/*$", "", subber)
-            finalstr = '/'.join(['imageroot', re.sub("^"+re.escape(subber)+"/*", "", member.name)])
+            subber = re.sub(r"^/*", "", rootfsdir)
+            subber = re.sub(r"/*$", "", subber)
+            finalstr = '/'.join(['imageroot', re.sub(r"^"+re.escape(subber)+"/*", "", member.name)])
             member.name = finalstr
             return(member)
 
@@ -676,12 +711,16 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         return(True)
 
     def save_files_tarfile(self, imageId, namespace, tarfile):
-        if not os.path.exists(tarfile):
+        tarfilepath = Path(tarfilepath)
+        if not tarfilepath.exists():
             return(False)
 
-        thedir = os.path.join(self.imagerootdir, imageId, "file_store", namespace)
-        thefile = os.path.join(thedir, "stored_files.tar.gz")
-        if not os.path.exists(thedir):
+
+        Path(self.imagerootdir) / "file_store"/ namespace
+        thedir = Path(self.imagerootdir) / "file_store"/ namespace
+        thefile = Path(thedir) /"stored_files.tar.gz"
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
 
         shutil.copy(tarfile, thefile)
@@ -689,30 +728,33 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         return(True)
 
     def load_files_tarfile(self, imageId, namespace):
-        thedir = os.path.join(self.imagerootdir, imageId, "file_store", namespace)
-        thefile = os.path.join(thedir, 'stored_files.tar.gz')
-        if not os.path.exists(thefile):
-            thefile = os.path.join(self.imagerootdir, imageId, 'analyzer_output', namespace, 'file_cache', 'stored_files.tar.gz')
+        thedir = Path(self.imagerootdir) / imageId / "file_store" / namespace
+        thefile = Path(thedir) / 'stored_files.tar.gz'
+        thefilepath = Path(thefile)
+        if not thefilepath.exists():
+            thefile =  Path(self.imagerootdir) / imageId / 'analyzer_output'/ namespace/ 'file_cache'/ 'stored_files.tar.gz'
 
-        if not os.path.exists(thefile):
+        if not thefilepath.exists():
             return(False)
         return(thefile)
 
     def load_files_namespaces(self, imageId):
         namespaces = list()
-        thedir = os.path.join(self.imagerootdir, imageId, "file_store")
-        if os.path.exists(thedir):
+        thedir = Path(self.imagerootdir) / imageId / "file_store"
+        thedirpath = Path(thedir)
+        if thedirpath.exists():
             for d in os.listdir(thedir):
                 namespaces.append(d)
         return(namespaces)
 
     def load_files_metadata(self, imageId, namespace):
-        thedir = os.path.join(self.imagerootdir, imageId, "file_store", namespace)
-        thefile = os.path.join(thedir, 'stored_files.tar.gz')
-        if not os.path.exists(thefile):
-            thefile = os.path.join(self.imagerootdir, imageId, 'analyzer_output', namespace, 'file_cache', 'stored_files.tar.gz')
+        thedir = Path(self.imagerootdir) / imageId / "file_store" / namespace
+        thefile = Path(thedir) / 'stored_files.tar.gz'
+        thefilepath = Path(thefile)
+        if not thefilepath.exists():
+            thefile = Path(self.imagerootdir) / imageId / 'analyzer_output'/ namespace/ 'file_cache'/ 'stored_files.tar.gz'
 
-        if not os.path.exists(thefile):
+        if not thefilepath.exists():
             allfiles = {}
         else:
             allfiles = anchore_utils.get_files_from_tarfile(thefile)
@@ -726,7 +768,7 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         ret = {}
 
         basedir = self.feedrootdir
-        feedfile = os.path.join(basedir, "feedmeta.json")
+        feedfile = Path(basedir)/ "feedmeta.json"
         feedmeta = {}
         if os.path.exists(feedfile):
             with open(feedfile, 'r') as FH:
@@ -736,7 +778,7 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
 
     def save_feedmeta(self, feedmeta):
         basedir = self.feedrootdir
-        feedfile = os.path.join(basedir, "feedmeta.json")
+        feedfile = Path(basedir)/ "feedmeta.json"
         if feedmeta:
             with open(feedfile, 'w') as OFH:
                 OFH.write(json.dumps(feedmeta))
@@ -745,31 +787,35 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
 
     def create_feed(self, feed):
         basedir = self.feedrootdir
-        thedir = os.path.join(basedir, feed)
-        if not os.path.exists(thedir):
+        thedir = Path(basedir)/feed
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
         return(True)
 
     def create_feedgroup(self, feed, group):
         basedir = self.feedrootdir
-        thedir = os.path.join(basedir, feed, group)
-        if not os.path.exists(thedir):
+        thedir = Path(basedir)/feed/group
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
         return(True)
     
     def delete_feed(self, feed):
         basedir = self.feedrootdir
-        thedir = os.path.join(basedir, feed)
-        if os.path.exists(thedir):
+        thedir = Path(basedir) / feed
+        thedirpath = Path(thedir)
+        if thedirpath.exists():
             shutil.rmtree(thedir)
 
     def save_feed_group_data(self, feed, group, datafilename, data):
         basedir = self.feedrootdir
-        thedir = os.path.join(basedir, feed, group)
-        if not os.path.exists(thedir):
+        thedir =   Path(basedir) / feed / group
+        thedirpath = Path(thedir)
+        if not thedirpath.exists():
             os.makedirs(thedir)
 
-        thefile = os.path.join(thedir, datafilename)
+        thefile = Path(thedir) / datafilename
 
         jsondata = json.dumps(data).encode('utf8')
 
@@ -781,9 +827,10 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
     def load_feed_group_data(self, feed, group, datafilename):
         ret = []
         basedir = self.feedrootdir
-        thefile = os.path.join(basedir, feed, group, datafilename)
-
-        if os.path.exists(thefile):
+        thefile = Path(basedir)/ feed /group /datafilename
+        thefilepath = Path(thefile)
+        
+        if thefilepath.exists():
             with open(thefile, 'r') as FH:
                 ret = json.loads(FH.read().decode('utf8'))
 
@@ -792,9 +839,10 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
     def delete_feed_group_data(self, feed, group, datafilename):
         ret = True
         basedir = self.feedrootdir
-        thefile = os.path.join(basedir, feed, group, datafilename)
+        thefile = Path(basedir)/ feed /group /datafilename
+        thefilepath = Path(thefile)
         
-        if os.path.exists(thefile):
+        if thefilepath.exists():
             try:
                 os.remove(thefile)
             except:
@@ -804,7 +852,7 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         
     def save_policymeta(self, policymeta):
         basedir = self.policyrootdir
-        policyfile = os.path.join(basedir, "policymeta.json")
+        policyfile = Path(basedir) / "policymeta.json"
         if policymeta:
             with open(policyfile, 'w') as OFH:
                 OFH.write(json.dumps(policymeta))
@@ -815,9 +863,10 @@ class AnchoreImageDB_FS(anchore_image_db_base.AnchoreImageDB):
         ret = {}
 
         basedir = self.policyrootdir
-        policyfile = os.path.join(basedir, "policymeta.json")
+        policyfile = Path(basedir)/ "policymeta.json"
+        policyfilepath = Path(policyfile)
         policymeta = {}
-        if os.path.exists(policyfile):
+        if policyfilepath.exists():
             with open(policyfile, 'r') as FH:
                 ret = json.loads(FH.read())
 
